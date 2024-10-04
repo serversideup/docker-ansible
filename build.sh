@@ -73,8 +73,9 @@ get_latest_stable() {
 
 generate_tags() {
     local tags=()
-    local os_name=$(yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE")
-    local tag_variation=$(yq e ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .tag_name" "$ANSIBLE_VERSIONS_FILE")
+    local os_family=$(yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE")
+    local ansible_variation_tag=$(yq e ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .tag_name" "$ANSIBLE_VERSIONS_FILE")
+    local default_ansible_variation=$(yq e '.ansible_variations[] | select(.latest_stable == true) | .tag_name' "$ANSIBLE_VERSIONS_FILE")
 
     # Get latest stable values
     local latest_ansible latest_python latest_os
@@ -84,11 +85,11 @@ generate_tags() {
     local is_ansible_latest=$([ "$ANSIBLE_VERSION" == "$latest_ansible" ] && echo true || echo false)
     local is_python_latest=$([ "$PYTHON_VERSION" == "$latest_python" ] && echo true || echo false)
     local is_os_latest=$([ "$BASE_OS" == "$latest_os" ] && echo true || echo false)
-    local is_variation_default=$(yq e ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
-    local is_os_family_default=$(yq e ".operating_system_distributions[] | select(.name == \"$os_name\") | .versions[] | select(.name == \"$BASE_OS\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
+    local is_ansible_variation_default=$([ "$ansible_variation_tag" == "$default_ansible_variation" ] && echo true || echo false)
+    local is_os_family_default=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
 
-    is_latest_ansible_and_python() {
-        [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ] 
+    is_default_ansible_release() {
+        [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ] && [ "$is_ansible_variation_default" == "true" ]
     }
 
     is_default_os() {
@@ -96,7 +97,7 @@ generate_tags() {
     }
 
     is_default_release() {
-        is_latest_ansible_and_python && is_default_os
+        is_default_ansible_release && is_default_os
     }
 
     # Determine the tag prefix based on release type
@@ -105,74 +106,71 @@ generate_tags() {
         tag_prefix="${RELEASE_TYPE}-"
     fi
 
-    for repo in $DOCKER_REPOSITORY; do
-        # Always add the full version tags
-        tags+=("$repo:${tag_prefix}$ANSIBLE_VERSION-$tag_variation-$BASE_OS-python$PYTHON_VERSION")
-
-        if [ "$is_variation_default" == "true" ]; then
-            tags+=("$repo:${tag_prefix}$ANSIBLE_VERSION-$BASE_OS-python$PYTHON_VERSION")
-        fi
-
-        if is_latest_ansible_and_python; then
-            tags+=("$repo:${tag_prefix}$BASE_OS")
-        fi
-
-        if is_default_os && [ "$is_variation_default" == "true" ]; then
-            tags+=("$repo:${tag_prefix}$ANSIBLE_VERSION-python$PYTHON_VERSION")
-        fi
-
-        if is_latest_release; then
-            tags+=("$repo:${tag_prefix}$RELEASE_TYPE")
-            tags+=("$repo:${tag_prefix}$tag_variation")
-        fi
-        
-        # Add tags based on provided inputs and latest stable checks
-
-        # Add tags based on provided inputs and latest stable checks
-        if is_latest_release; then
-            tags+=("$repo:${tag_prefix}$RELEASE_TYPE")
-            tags+=("$repo:${tag_prefix}$tag_variation")
-        fi
-
-        if [ "$is_variation_default" == "true" ] && [ "$is_python_latest" == "true" ] && [ "$is_os_latest" == "true" ]; then
-            tags+=("$repo:${tag_prefix}$ANSIBLE_VERSION")
-        fi
-
-        if [ "$is_variation_default" == "true" ] && [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ]; then
-            tags+=("$repo:${tag_prefix}python$PYTHON_VERSION")
-        fi
-
-        if [ "$is_variation_default" == "true" ] && [ "$is_ansible_latest" == "true" ] && [ "$is_os_latest" == "true" ]; then
-            tags+=("$repo:${tag_prefix}$BASE_OS")
-            if [ "$is_os_family_default" == "true" ]; then
-                tags+=("$repo:${tag_prefix}$os_name")
+    generate_tag() {
+        local repo=$1
+        local tag=$2
+        # Only add the tag if it's not empty
+        if [ -n "$tag" ]; then
+            tags+=("$repo:$tag")
+            
+            # Add GitHub release tag if provided
+            if [ -n "$GITHUB_RELEASE_TAG" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
+                tags+=("$repo:$GITHUB_RELEASE_TAG-$tag")
             fi
         fi
+    }
 
-        # Add combined tags
-        if [ "$is_variation_default" == "true" ] && [ "$is_ansible_latest" == "true" ]; then
-            tags+=("$repo:${tag_prefix}$BASE_OS-python$PYTHON_VERSION")
-            if [ "$is_os_family_default" == "true" ]; then
-                tags+=("$repo:${tag_prefix}$os_name-python$PYTHON_VERSION")
-            fi
-        fi
-    done
-
-    # Add GitHub Release tag if set
-    if [ -n "$GITHUB_RELEASE_TAG" ]; then
-        local github_tags=()
-        for tag in "${tags[@]}"; do
-            if [ "$RELEASE_TYPE" == "latest" ]; then
-                # For 'latest' release type, add both with and without the GitHub tag
-                github_tags+=("$tag")
-                github_tags+=("${tag/:/:$GITHUB_RELEASE_TAG-}")
-            else
-                # For other release types, just append the GitHub tag
-                github_tags+=("${tag}-${GITHUB_RELEASE_TAG}")
+    # Function to construct tag without default ansible variation
+    construct_tag() {
+        local parts=("$@")
+        local tag=""
+        for part in "${parts[@]}"; do
+            if [ -n "$part" ] && ([ "$part" != "$default_ansible_variation" ] || [ "$is_ansible_variation_default" == "false" ]); then
+                tag+="${tag:+-}$part"
             fi
         done
-        tags=("${github_tags[@]}")
-    fi
+        echo "$tag"
+    }
+
+    for repo in $DOCKER_REPOSITORY; do
+        # Most specific tag
+        generate_tag "$repo" "$(construct_tag $tag_prefix $ANSIBLE_VERSION $ansible_variation_tag $BASE_OS python$PYTHON_VERSION)"
+
+        # Tag without Ansible Version if it's the latest
+        if [ "$is_ansible_latest" == "true" ]; then
+            generate_tag "$repo" "$(construct_tag $tag_prefix $ansible_variation_tag $BASE_OS python$PYTHON_VERSION)"
+        fi
+
+        # Tag with OS family instead of specific OS if it's the latest in its family
+        if [ "$is_os_family_default" == "true" ]; then
+            generate_tag "$repo" "$(construct_tag $tag_prefix $ANSIBLE_VERSION $ansible_variation_tag $os_family python$PYTHON_VERSION)"
+        fi
+
+        # Tag without OS if it's the default
+        if is_default_os; then
+            generate_tag "$repo" "$(construct_tag $tag_prefix $ANSIBLE_VERSION $ansible_variation_tag python$PYTHON_VERSION)"
+        fi
+
+        # Tag without Python Version if it's the latest
+        if [ "$is_python_latest" == "true" ]; then
+            generate_tag "$repo" "$(construct_tag $tag_prefix $ANSIBLE_VERSION $ansible_variation_tag $BASE_OS)"
+        fi
+
+        # Tag without Python Version or OS if both are default
+        if [ "$is_python_latest" == "true" ] && is_default_os; then
+            generate_tag "$repo" "$(construct_tag $tag_prefix $ANSIBLE_VERSION $ansible_variation_tag)"
+        fi
+
+        # Tag without Python Version, OS, or Ansible Version if all are default
+        if is_default_release; then
+            generate_tag "$repo" "$(construct_tag $tag_prefix $ansible_variation_tag)"
+        fi
+
+        # Most general tag if everything is default
+        if is_default_release && [ "$is_ansible_variation_default" == "true" ]; then
+            generate_tag "$repo" "${tag_prefix}latest"
+        fi
+    done
 
     # Remove duplicates and print tags
     printf '%s\n' "${tags[@]}" | sort -u
