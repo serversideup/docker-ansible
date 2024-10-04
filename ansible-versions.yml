@@ -1,0 +1,66 @@
+---
+ansible_variations:
+  - name: "ansible-core"
+    tag_name: "core"
+  - name: "ansible"
+    tag_name: "ansible"
+    latest_stable: true
+
+python_versions:
+  - name: "3.12"
+    latest_stable: true
+  - name: "3.11"
+  - name: "3.10"
+  - name: "3.9"
+
+operating_system_distributions:
+  - name: "debian"
+    latest_stable: true
+    versions:
+      - name: "bullseye"
+        latest_stable: true
+        package_dependencies:
+          - "python3"
+      - name: "bookworm"
+        package_dependencies:
+          - "python3"
+  - name: "alpine"
+    versions:
+      - name: "alpine3.20"
+        latest_stable: true
+        package_dependencies:
+          - "python3"
+          - "python3-pip"
+          - "python3-dev"
+          - "build-essential"
+      - name: "alpine3.19"
+        package_dependencies:
+          - "python3"
+          - "python3-pip"
+          - "python3-dev"
+          - "build-essential"
+
+ansible_versions:
+  - version: "2.17"
+    latest_stable: true
+    python_versions:
+      minimum: "3.10"
+      maximum: "3.12"
+    base_os:
+      - name: alpine3.20
+      - name: bullseye
+  - version: "2.16"
+    python_versions:
+      minimum: "3.10"
+      maximum: "3.11"
+    base_os:
+      - name: alpine3.20
+      - name: bullseye
+  - version: "2.15"
+    python_versions:
+      - "3.11"
+      - "3.10"
+      - "3.9"
+    base_os:
+      - name: alpine3.20
+      - name: bullseye
