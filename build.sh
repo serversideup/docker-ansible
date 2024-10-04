@@ -91,6 +91,19 @@ generate_tags() {
     local is_python_latest=$([ "$PYTHON_VERSION" == "$latest_python" ] && echo true || echo false)
     local is_os_latest=$([ "$BASE_OS" == "$latest_os" ] && echo true || echo false)
     local is_os_family_default=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
+    local is_variation_latest=$(yq e ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
+
+    is_latest_ansible_version_and_python_version() {
+        [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ]
+    }
+
+    is_default_os() {
+        [ "$is_os_latest" == "true" ] && [ "$is_os_family_default" == "true" ]
+    }
+
+    is_default_release() {
+        is_latest_ansible_version_and_python_version && is_default_os
+    }
 
     # Determine the tag prefix based on release type
     local tag_prefix=""
@@ -143,17 +156,12 @@ generate_tags() {
     fi
 
     # Most general tag if everything is default
-    if [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ] && [ "$is_os_latest" == "true" ]; then
+    if is_default_release; then
         add_tag "${tag_prefix}${ansible_variation_tag}"
         add_tag "${tag_prefix}${ANSIBLE_VERSION}"
+        add_tag "$RELEASE_TYPE"
         if [ -n "$GITHUB_REF_NAME" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
             add_tag "${GITHUB_REF_NAME}"
-        fi
-        # Only add "latest" tag if the release type is "latest"
-        if [ "$RELEASE_TYPE" == "latest" ]; then
-            add_tag "latest"
-        else
-            add_tag "$RELEASE_TYPE"
         fi
     fi
 
@@ -190,8 +198,8 @@ generate_tags() {
         add_tag "${tag_prefix}python${PYTHON_VERSION}"
     fi
 
-    # Tag for Ansible version
-    if are_other_components_latest "$is_ansible_latest"; then
+    # Tag for Ansible version (only if everything else is latest)
+    if [ "$is_python_latest" == "true" ] && [ "$is_os_latest" == "true" ] && [ "$is_variation_latest" == "true" ]; then
         add_tag "${tag_prefix}${ANSIBLE_VERSION}"
     fi
 
