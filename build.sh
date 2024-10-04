@@ -7,7 +7,7 @@ ANSIBLE_VARIATION=""
 ANSIBLE_VERSION=""
 PYTHON_VERSION=""
 BASE_OS=""
-GITHUB_RELEASE_TAG=""
+GITHUB_REF_NAME="${GITHUB_REF_NAME:-""}"
 RELEASE_TYPE="dev"
 DOCKER_REPOSITORY="${DOCKER_REPOSITORY:-"docker.io/serversideup/ansible ghcr.io/serversideup/ansible"}"
 DOCKER_ADDITIONAL_BUILD_ARGS=()
@@ -76,6 +76,12 @@ generate_tags() {
     local os_family=$(yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE")
     local ansible_variation_tag=$(yq e ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .tag_name" "$ANSIBLE_VERSIONS_FILE")
 
+    # Add this check to ensure ansible_variation_tag is not empty
+    if [ -z "$ansible_variation_tag" ]; then
+        echo_color_message red "Error: Could not determine ansible_variation_tag for $ANSIBLE_VARIATION"
+        exit 1
+    fi
+
     # Get latest stable values
     local latest_ansible latest_python latest_os
     read -r latest_ansible latest_python latest_os <<< $(get_latest_stable)
@@ -96,12 +102,12 @@ generate_tags() {
         local tag=$1
         for repo in $DOCKER_REPOSITORY; do
             tags+=("$repo:$tag")
-            if [ -n "$GITHUB_RELEASE_TAG" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
+            if [ -n "$GITHUB_REF_NAME" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
                 # Replace the prefix with the GitHub release tag if it exists
                 if [[ "$tag" == "$tag_prefix"* ]]; then
-                    new_tag="${GITHUB_RELEASE_TAG}-${tag#$tag_prefix}"
+                    new_tag="${GITHUB_REF_NAME}-${tag#$tag_prefix}"
                 else
-                    new_tag="${GITHUB_RELEASE_TAG}-${tag}"
+                    new_tag="${GITHUB_REF_NAME}-${tag}"
                 fi
                 tags+=("$repo:$new_tag")
             fi
@@ -140,8 +146,8 @@ generate_tags() {
     if [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ] && [ "$is_os_latest" == "true" ]; then
         add_tag "${tag_prefix}${ansible_variation_tag}"
         add_tag "${tag_prefix}${ANSIBLE_VERSION}"
-        if [ -n "$GITHUB_RELEASE_TAG" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
-            add_tag "${GITHUB_RELEASE_TAG}"
+        if [ -n "$GITHUB_REF_NAME" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
+            add_tag "${GITHUB_REF_NAME}"
         fi
         # Only add "latest" tag if the release type is "latest"
         if [ "$RELEASE_TYPE" == "latest" ]; then
@@ -278,7 +284,7 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
         --github-release-tag)
-        GITHUB_RELEASE_TAG="$2"
+        GITHUB_REF_NAME="$2"
         shift 2
         ;;
         --release-type)
@@ -318,6 +324,12 @@ while [[ $# -gt 0 ]]; do
         ;;
     esac
 done
+
+# In the argument parsing section, add this after setting ANSIBLE_VARIATION
+if [ -z "$ANSIBLE_VARIATION" ]; then
+    ANSIBLE_VARIATION=$(yq e '.ansible_variations[] | select(.latest_stable == true) | .name' "$ANSIBLE_VERSIONS_FILE")
+    echo_color_message green "Using default Ansible variation: $ANSIBLE_VARIATION"
+fi
 
 # After argument parsing, add this validation block:
 
