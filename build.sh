@@ -273,15 +273,21 @@ build_docker_image() {
   # Add platform to build args
   build_args+=(--platform "$PLATFORM")
 
-  # Construct the full Docker command
-  docker_command="docker build ${DOCKER_ADDITIONAL_BUILD_ARGS[@]} ${build_args[@]} --file \"src/Dockerfile\" \"$PROJECT_ROOT_DIR\""
+  # Construct the Docker command as an array
+  docker_command=(
+    docker build
+    "${DOCKER_ADDITIONAL_BUILD_ARGS[@]}"
+    "${build_args[@]}"
+    --file "src/Dockerfile"
+    "$PROJECT_ROOT_DIR"
+  )
   
   # Show the Docker command
   echo_color_message yellow "Docker command to be executed:"
-  echo "$docker_command"
+  echo "${docker_command[*]}"
   
   # Execute the Docker command
-  eval $docker_command
+  "${docker_command[@]}"
 
   if [[ "$CI" == "true" ]]; then
     if [[ -n "$GITHUB_ENV" ]]; then
