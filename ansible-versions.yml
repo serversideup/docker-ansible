@@ -96,6 +96,7 @@ operating_system_distributions:
       - name: "alpine3.20"
         latest_stable: true
         package_dependencies:
+          - "build-base"
           - "git"
           - "libffi-dev"
           - "openssh-client"
