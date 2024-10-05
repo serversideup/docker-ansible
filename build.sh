@@ -77,15 +77,41 @@ fetch_latest_component_versions() {
 lookup_pypi_version() {
     local variation=$1
     local version=$2
-    local api_url="https://pypi.org/pypi/${variation}/json"
     
-    # Check if the version is already a full patch version
+    # If it's already a full patch version (x.y.z), return it as is
     if [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo "$version"
-    else
-        # Fetch the JSON data and extract the latest stable version for the given major.minor
-        local latest_version=$(curl -s "$api_url" | jq -r ".releases | keys[] | select(startswith(\"$version.\") and (contains(\"b\") or contains(\"rc\") | not))" | sort -V | tail -n1)
+        return 0
+    fi
+    
+    local api_url="https://pypi.org/pypi/${variation}/json"
+    
+    # Fetch the JSON data
+    local json_data=$(curl -s "$api_url")
+    
+    # Extract all versions
+    local versions=$(echo "$json_data" | jq -r '.releases | keys[]')
+    
+    if [[ "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then
+        # Major.Minor version provided, find latest patch
+        local latest_version=$(echo "$versions" | grep "^$version\." | grep -v "[a-zA-Z]" | sort -V | tail -n1)
+        if [ -z "$latest_version" ]; then
+            echo "No stable version found for $version" >&2
+            return 1
+        fi
         echo "$latest_version"
+    elif [[ "$version" =~ ^[0-9]+$ ]]; then
+        # Only Major version provided, find latest minor.patch
+        local latest_version=$(echo "$versions" | grep "^$version\." | grep -v "[a-zA-Z]" | sort -V | tail -n1)
+        if [ -z "$latest_version" ]; then
+            echo "No stable version found for $version" >&2
+            return 1
+        fi
+        echo "$latest_version"
+    else
+        # Invalid version format
+        echo "Invalid version format: $version" >&2
+        return 1
     fi
 }
 
@@ -102,15 +128,15 @@ generate_tags() {
     local is_ansible_latest=$([ "$ANSIBLE_VERSION" == "$latest_ansible" ] && echo true || echo false)
     local is_python_latest=$([ "$PYTHON_VERSION" == "$latest_python" ] && echo true || echo false)
     local is_os_latest=$([ "$BASE_OS" == "$latest_os" ] && echo true || echo false)
-    local is_os_family_default=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
-    local is_variation_latest=$(yq e ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
+    local is_os_family_latest=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
+    local is_os_version_latest=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
 
     is_latest_ansible_version_and_python_version() {
         [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ]
     }
 
     is_default_os() {
-        [ "$is_os_latest" == "true" ] && [ "$is_os_family_default" == "true" ]
+        [ "$is_os_latest" == "true" ] && [ "$is_os_version_latest" == "true" ] && [ "$is_os_family_latest" == "true" ]
     }
 
     is_default_release() {
@@ -149,7 +175,7 @@ generate_tags() {
     fi
 
     # Tag with OS family instead of specific OS if it's the latest in its family
-    if [ "$is_os_family_default" == "true" ]; then
+    if [ "$is_os_family_latest" == "true" ]; then
         add_tag "${tag_prefix}${ANSIBLE_VERSION}-${os_family}-python${PYTHON_VERSION}"
     fi
 
@@ -164,7 +190,7 @@ generate_tags() {
     fi
 
     # Tag without Python Version or OS if both are default
-    if [ "$is_python_latest" == "true" ] && [ "$is_os_latest" == "true" ]; then
+    if [ "$is_python_latest" == "true" ] && is_default_os; then
         add_tag "${tag_prefix}${ANSIBLE_VERSION}"
     fi
 
@@ -179,7 +205,7 @@ generate_tags() {
     # Function to check if all other components are latest stable
     are_other_components_latest() {
         local exclude=$1
-        local conditions=("$is_ansible_latest" "$is_python_latest" "$is_os_latest")
+        local conditions=("$is_ansible_latest" "$is_python_latest" "$is_os_latest" "$is_os_version_latest" "$is_os_family_latest")
         
         for component in "${conditions[@]}"; do
             if [ "$component" != "$exclude" ] && [ "$component" != "true" ]; then
@@ -191,17 +217,17 @@ generate_tags() {
     }
 
     # Tag for OS family if it's the latest stable
-    if [ "$is_os_family_default" == "true" ] && are_other_components_latest "$is_os_latest"; then
+    if [ "$is_os_family_latest" == "true" ] && [ "$is_os_version_latest" == "true" ] && are_other_components_latest "$is_os_latest"; then
         add_tag "${tag_prefix}${os_family}"
     fi
 
     # Tag for specific OS
-    if are_other_components_latest "$is_os_latest"; then
+    if [ "$is_os_version_latest" == "true" ] && are_other_components_latest "$is_os_latest"; then
         add_tag "${tag_prefix}${BASE_OS}"
     fi
 
     # Tag for Python version
-    if are_other_components_latest "$is_python_latest"; then
+    if are_other_components_latest "$is_python_latest" && is_default_os; then
         add_tag "${tag_prefix}python${PYTHON_VERSION}"
     fi
 
@@ -366,10 +392,46 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# In the argument parsing section, add this after setting ANSIBLE_VARIATION
+# First, check if we need to fill in missing parameters
+if [ -z "$ANSIBLE_VERSION" ] || [ -z "$PYTHON_VERSION" ] || [ -z "$BASE_OS" ]; then
+    echo_color_message yellow "Automatically filling in missing parameters based on ansible-versions.yml"
+fi
+
+# Set default Ansible variation if not provided
 if [ -z "$ANSIBLE_VARIATION" ]; then
     ANSIBLE_VARIATION=$(yq e '.ansible_variations[] | select(.latest_stable == true) | .name' "$ANSIBLE_VERSIONS_FILE")
     echo_color_message green "Using default Ansible variation: $ANSIBLE_VARIATION"
+fi
+
+# Look up Ansible version
+if [ -n "$ANSIBLE_VERSION" ]; then
+    if [[ $ANSIBLE_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo_color_message green "Using provided Ansible version: $ANSIBLE_VERSION"
+    else
+        ANSIBLE_VERSION=$(lookup_pypi_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION")
+        if [ $? -ne 0 ]; then
+            # Error message already printed by lookup_pypi_version
+            exit 1
+        fi
+        echo_color_message green "Using Ansible version: $ANSIBLE_VERSION"
+    fi
+fi
+
+# Fill in missing values with latest stable
+if [ -z "$ANSIBLE_VERSION" ] || [ -z "$PYTHON_VERSION" ] || [ -z "$BASE_OS" ]; then
+    read -r latest_ansible latest_python latest_os <<< $(fetch_latest_component_versions "$ANSIBLE_VARIATION")
+    if [ -z "$ANSIBLE_VERSION" ]; then
+        ANSIBLE_VERSION=$latest_ansible
+        echo_color_message green "Using Ansible version: $ANSIBLE_VERSION"
+    fi
+    if [ -z "$PYTHON_VERSION" ]; then
+        PYTHON_VERSION=$latest_python
+        echo_color_message green "Using Python version: $PYTHON_VERSION"
+    fi
+    if [ -z "$BASE_OS" ]; then
+        BASE_OS=$latest_os
+        echo_color_message green "Using Base OS: $BASE_OS"
+    fi
 fi
 
 # Update the validation block
@@ -399,40 +461,6 @@ validate_option "Ansible variation" "$ANSIBLE_VARIATION" '.ansible_variations[].
 validate_option "Ansible version" "$ANSIBLE_VERSION" ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .versions[].version"
 validate_option "Python version" "$PYTHON_VERSION" '.python_versions[].name'
 validate_option "Base OS" "$BASE_OS" '.operating_system_distributions[].versions[].name'
-
-if [ -n "$ANSIBLE_VARIATION" ] && [ -z "$ANSIBLE_VERSION" ] && [ -z "$PYTHON_VERSION" ] && [ -z "$BASE_OS" ]; then
-    echo_color_message yellow "Automatically filling in missing parameters based on ansible-versions.yml"
-    read -r ANSIBLE_VERSION PYTHON_VERSION BASE_OS <<< $(fetch_latest_component_versions "$ANSIBLE_VARIATION")
-    echo_color_message green "Using Ansible version: $ANSIBLE_VERSION"
-    echo_color_message green "Using Python version: $PYTHON_VERSION"
-    echo_color_message green "Using Base OS: $BASE_OS"
-else
-    # Check if at least one required argument is provided
-    if [[ -z $ANSIBLE_VARIATION && -z $ANSIBLE_VERSION && -z $PYTHON_VERSION && -z $BASE_OS ]]; then
-        echo_color_message red "Error: At least one of --variation, --version, --python, or --os must be provided."
-        echo
-        help_menu
-        exit 1
-    fi
-
-    # Fill in missing values with latest stable
-    if [ -z "$ANSIBLE_VERSION" ] || [ -z "$PYTHON_VERSION" ] || [ -z "$BASE_OS" ]; then
-        echo_color_message yellow "Automatically filling in missing parameters based on ansible-versions.yml"
-        read -r latest_ansible latest_python latest_os <<< $(fetch_latest_component_versions "$ANSIBLE_VARIATION")
-        if [ -z "$ANSIBLE_VERSION" ]; then
-            ANSIBLE_VERSION=$latest_ansible
-            echo_color_message green "Using Ansible version: $ANSIBLE_VERSION"
-        fi
-        if [ -z "$PYTHON_VERSION" ]; then
-            PYTHON_VERSION=$latest_python
-            echo_color_message green "Using Python version: $PYTHON_VERSION"
-        fi
-        if [ -z "$BASE_OS" ]; then
-            BASE_OS=$latest_os
-            echo_color_message green "Using Base OS: $BASE_OS"
-        fi
-    fi
-fi
 
 # Function to print tags
 print_tags() {
