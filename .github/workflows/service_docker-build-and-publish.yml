@@ -62,7 +62,7 @@ jobs:
             --version ${{ matrix.ansible_version }} \
             --python ${{ matrix.python_version }} \
             --os ${{ matrix.base_os }} \
-            --release_type ${{ inputs.release_type }} \
+            --release-type ${{ inputs.release_type }} \
             --print-tags-only
 
       - name: Build and push
@@ -82,5 +82,5 @@ jobs:
             linux/arm64/v8
           pull: true
           push: true
-          tags: ${{ env.DOCKER_TAGS }}}
+          tags: ${{ env.DOCKER_TAGS }}
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Run Ansible anywhere with the power of Docker
