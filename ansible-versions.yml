@@ -20,25 +20,34 @@ operating_system_distributions:
       - name: "bullseye"
         latest_stable: true
         package_dependencies:
-          - "python3"
+          - "git"
+          - "libffi-dev"
+          - "libhdf5-dev"
+          - "libssl-dev"
+          - "openssh-client"
+          - "sshpass"
       - name: "bookworm"
         package_dependencies:
-          - "python3"
+        package_dependencies:
+          - "git"
+          - "libffi-dev"
+          - "libssl-dev"
+          - "openssh-client"
+          - "sshpass"
   - name: "alpine"
     versions:
       - name: "alpine3.20"
         latest_stable: true
         package_dependencies:
-          - "python3"
-          - "python3-pip"
-          - "python3-dev"
-          - "build-essential"
+          - "build-base"
+          - "git"
+          - "libffi-dev"
+          - "openssh-client"
+          - "openssl-dev"
+          - "rsync"
+          - "sshpass"
       - name: "alpine3.19"
         package_dependencies:
-          - "python3"
-          - "python3-pip"
-          - "python3-dev"
-          - "build-essential"
 
 ansible_versions:
   - version: "2.17"
