@@ -79,7 +79,6 @@ jobs:
             PACKAGE_DEPENDENCIES=${{ env.PACKAGE_DEPENDENCIES }}
           platforms: |
             linux/amd64
-            linux/arm/v7
             linux/arm64/v8
           pull: true
           push: true
