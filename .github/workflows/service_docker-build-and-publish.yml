@@ -29,8 +29,7 @@ jobs:
     needs: setup-matrix
     runs-on: ubuntu-24.04
     strategy:
-      matrix: 
-        include: ${{fromJson(needs.setup-matrix.outputs.ansible-version-map-json)}}
+      matrix: ${{fromJson(needs.setup-matrix.outputs.ansible-version-map-json)}}
     steps:
       - name: Check out code.
         uses: actions/checkout@v4
