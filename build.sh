@@ -25,10 +25,6 @@ function ui_set_green {
     printf $'\033[0;32m'
 }
 
-function ui_set_red {
-    printf $'\033[0;31m'
-}
-
 function ui_reset_colors {
     printf "\e[0m"
 }
@@ -40,6 +36,30 @@ function echo_color_message (){
   ui_set_$color
   echo "$message"
   ui_reset_colors
+}
+
+# Add this function near the top of the script, with other utility functions
+save_to_github_env() {
+    local key=$1
+    local value=$2
+    local is_multiline=${3:-false}
+
+    if [[ $CI == "true" ]]; then
+        if [[ -n "$GITHUB_ENV" ]]; then
+            if [[ "$is_multiline" == "true" ]]; then
+                echo "${key}<<EOF" >> "$GITHUB_ENV"
+                echo "$value" >> "$GITHUB_ENV"
+                echo "EOF" >> "$GITHUB_ENV"
+            else
+                echo "${key}=${value}" >> "$GITHUB_ENV"
+            fi
+            echo_color_message green "✅ Saved ${key} to GITHUB_ENV"
+        else
+            echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing ${key} to GITHUB_ENV."
+        fi
+    else
+        echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
+    fi
 }
 
 check_vars() {
@@ -251,67 +271,71 @@ generate_tags() {
     printf '%s\n' "${tags[@]}" | sort -u
 }
 
+# Add these functions near the top of the script, after other utility functions
+get_os_family() {
+    yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE"
+}
+
+get_package_dependencies() {
+    local os_family=$1
+    yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .package_dependencies[]" "$ANSIBLE_VERSIONS_FILE" | tr '\n' ',' | sed 's/,$//'
+}
+
 build_docker_image() {
-  tags=($(generate_tags))
+    tags=($(generate_tags))
   
-  # Get package dependencies from ansible-versions.yml
-  local os_family=$(yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE")
-  local package_dependencies=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .package_dependencies[]" "$ANSIBLE_VERSIONS_FILE" | tr '\n' ' ')
+    # Use the centralized functions to get OS family and package dependencies
+    local os_family=$(get_os_family)
+    local package_dependencies=$(get_package_dependencies "$os_family")
 
-  # Get the full patch version
-  local full_ansible_version=$(lookup_pypi_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION")
+    # Get the full patch version
+    local full_ansible_version=$(lookup_pypi_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION")
 
-  build_args=(
-    --build-arg ANSIBLE_VARIATION="$ANSIBLE_VARIATION"
-    --build-arg ANSIBLE_VERSION="$full_ansible_version"
-    --build-arg PYTHON_VERSION="$PYTHON_VERSION"
-    --build-arg BASE_OS_VERSION="$BASE_OS"
-    --build-arg PACKAGE_DEPENDENCIES="'$package_dependencies'"
-  )
+    build_args=(
+        --build-arg ANSIBLE_VARIATION="$ANSIBLE_VARIATION"
+        --build-arg ANSIBLE_VERSION="$full_ansible_version"
+        --build-arg PYTHON_VERSION="$PYTHON_VERSION"
+        --build-arg BASE_OS_VERSION="$BASE_OS"
+    )
 
-  for tag in "${tags[@]}"; do
-    build_args+=(--tag "$tag")
-  done
-
-  echo_color_message yellow "🐳 Building Docker Image with tags:"
-  printf '%s\n' "${tags[@]}"
-  
-  # Set default platform if not specified
-  if [ -z "$PLATFORM" ]; then
-    PLATFORM="linux/amd64"
-  fi
-
-  # Add platform to build args
-  build_args+=(--platform "$PLATFORM")
-
-  # Construct the Docker command as an array
-  docker_command=(
-    docker build
-    "${DOCKER_ADDITIONAL_BUILD_ARGS[@]}"
-    "${build_args[@]}"
-    --file "src/Dockerfile"
-    "$PROJECT_ROOT_DIR"
-  )
-  
-  # Show the Docker command
-  echo_color_message yellow "Docker command to be executed:"
-  echo "${docker_command[*]}"
-  
-  # Execute the Docker command
-  "${docker_command[@]}"
-
-  if [[ "$CI" == "true" ]]; then
-    if [[ -n "$GITHUB_ENV" ]]; then
-        echo "DOCKER_TAGS<<EOF" >> "$GITHUB_ENV"
-        printf '%s\n' "${tags[@]}" >> "$GITHUB_ENV"
-        echo "EOF" >> "$GITHUB_ENV"
-        echo_color_message green "✅ Saved Docker Tags to GITHUB_ENV"
-    else
-        echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing to GITHUB_ENV."
+    if [ -n "$package_dependencies" ]; then
+        build_args+=(--build-arg PACKAGE_DEPENDENCIES="$package_dependencies")
     fi
-  else
-    echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
-  fi
+
+    for tag in "${tags[@]}"; do
+        build_args+=(--tag "$tag")
+    done
+
+    echo_color_message yellow "🐳 Building Docker Image with tags:"
+    printf '%s\n' "${tags[@]}"
+    
+    # Set default platform if not specified
+    if [ -z "$PLATFORM" ]; then
+        PLATFORM="linux/amd64"
+    fi
+
+    # Add platform to build args
+    build_args+=(--platform "$PLATFORM")
+
+    # Construct the Docker command as an array
+    docker_command=(
+        docker --debug buildx build
+        "${DOCKER_ADDITIONAL_BUILD_ARGS[@]}"
+        "${build_args[@]}"
+        --file "src/Dockerfile"
+        "$PROJECT_ROOT_DIR"
+    )
+    
+    # Show the Docker command
+    echo_color_message yellow "Docker command to be executed:"
+    echo "${docker_command[*]}"
+    
+    # Execute the Docker command
+    "${docker_command[@]}"
+
+    # Echo out the tags at the end
+    echo_color_message green "✅ Docker image built successfully with the following tags:"
+    printf '%s\n' "${tags[@]}" | sort
 }
 
 help_menu() {
@@ -486,18 +510,14 @@ print_tags() {
     printf '%s\n' "${tags[@]}" | sort
 
     # Save to GitHub's environment
-    if [[ $CI == "true" ]]; then
-        if [[ -n "$GITHUB_ENV" ]]; then
-            echo "DOCKER_TAGS<<EOF" >> "$GITHUB_ENV"
-            printf '%s\n' "${tags[@]}" >> "$GITHUB_ENV"
-            echo "EOF" >> "$GITHUB_ENV"
-            echo_color_message green "✅ Saved Docker Tags to GITHUB_ENV"
-        else
-            echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing to GITHUB_ENV."
-        fi
-    else
-        echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
-    fi
+    save_to_github_env "DOCKER_TAGS" "$(printf '%s\n' "${tags[@]}")" true
+
+    # Use the centralized functions to get OS family and package dependencies
+    local os_family=$(get_os_family)
+    local package_dependencies=$(get_package_dependencies "$os_family")
+
+    # Save PACKAGE_DEPENDENCIES to GitHub's environment
+    save_to_github_env "PACKAGE_DEPENDENCIES" "$package_dependencies"
 }
 
 # Main execution

@@ -1,0 +1,15 @@
+name: Docker Publish (Beta Images)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - src/**
+jobs:
+  build-beta-images:
+    uses: ./.github/workflows/service_docker-build-and-publish.yml
+    secrets: inherit
+    with:
+      release_type: 'beta'

@@ -1,0 +1,85 @@
+name: Build and Publish Docker Images
+
+on:
+  workflow_call:
+    inputs:
+      release_type:
+        type: string
+        required: true
+        description: 'Release type (latest, beta, edge, dev, etc)'
+        default: 'edge'
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-24.04
+    outputs:
+      ansible-version-map-json: ${{ steps.get-ansible-versions.outputs.ansible-version-map-json }}
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Assemble Ansible versions into the matrix 😎
+      id: get-ansible-versions
+      run: |
+        MATRIX_JSON=$(yq -o=json ansible-versions.yml | jq -c '{include: [.ansible_variations[] | .versions[] as $version | .python_versions[] as $python | .base_os[] as $os | {ansible_variation: .name, ansible_version: $version.version, python_version: $python, base_os: $os.name, latest_stable: ($version.latest_stable // false)}]}')
+        echo "ansible-version-map-json=${MATRIX_JSON}" >> $GITHUB_OUTPUT
+        echo "${MATRIX_JSON}" | jq '.'
+
+  build-and-push:
+    needs: setup-matrix
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix: ${{fromJson(needs.setup-matrix.outputs.ansible-version-map-json)}}
+    steps:
+      - name: Check out code.
+        uses: actions/checkout@v4
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        if: ${{ inputs.authenticate_with_ghcr }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: "📦 Assemble the Docker Tags"
+        run: |
+          bash build.sh \
+            --variation ${{ matrix.ansible_variation }} \
+            --version ${{ matrix.ansible_version }} \
+            --python ${{ matrix.python_version }} \
+            --os ${{ matrix.base_os }} \
+            --release_type ${{ inputs.release_type }} \
+            --print-tags-only
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          file: src/Dockerfile
+          cache-from: type=gha,mode=max
+          cache-to: type=gha,mode=max
+          build-args: |
+            ANSIBLE_VERSION=${{ matrix.ansible_version }}
+            PYTHON_VERSION=${{ matrix.python_version }}
+            BASE_OS_VERSION=${{ matrix.base_os }}
+            PACKAGE_DEPENDENCIES=${{ env.PACKAGE_DEPENDENCIES }}
+          platforms: |
+            linux/amd64
+            linux/arm/v7
+            linux/arm64/v8
+          pull: true
+          push: true
+          tags: ${{ env.DOCKER_TAGS }}}
+          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Run Ansible anywhere with the power of Docker
