@@ -135,6 +135,23 @@ lookup_pypi_version() {
     fi
 }
 
+
+lookup_and_save_ansible_version() {
+    local variation=$1
+    local version=$2
+    
+    local ansible_patch_version=$(lookup_pypi_version "$variation" "$version")
+    if [ $? -ne 0 ]; then
+        echo_color_message red "Failed to lookup Ansible version"
+        exit 1
+    fi
+    
+    echo_color_message green "Looked up Ansible version: ${ansible_patch_version}"
+    save_to_github_env "ANSIBLE_PATCH_VERSION" "${ansible_patch_version}"
+    
+    echo "${ansible_patch_version}"
+}
+
 # Update generate_tags function
 generate_tags() {
     local tags=()
@@ -288,8 +305,8 @@ build_docker_image() {
     local os_family=$(get_os_family)
     local package_dependencies=$(get_package_dependencies "$os_family")
 
-    # Get the full patch version
-    local full_ansible_version=$(lookup_pypi_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION")
+    # Get the full patch version and save it to GITHUB_ENV
+    local full_ansible_version=$(lookup_and_save_ansible_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION")
 
     build_args=(
         --build-arg ANSIBLE_VARIATION="$ANSIBLE_VARIATION"
@@ -523,6 +540,9 @@ print_tags() {
 # Main execution
 if [ "$PRINT_TAGS_ONLY" = true ]; then
     print_tags
+    
+    # Lookup and save Ansible version even when just printing tags
+    lookup_and_save_ansible_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION"
 else
     build_docker_image
 fi

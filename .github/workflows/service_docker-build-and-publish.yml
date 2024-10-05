@@ -75,7 +75,7 @@ jobs:
             PYTHON_VERSION=${{ matrix.python_version }}
             BASE_OS_VERSION=${{ matrix.base_os }}
             ANSIBLE_VARIATION=${{ matrix.ansible_variation }}
-            ANSIBLE_VERSION=${{ matrix.ansible_version }}
+            ANSIBLE_VERSION=${{ env.ANSIBLE_PATCH_VERSION }}
             PACKAGE_DEPENDENCIES=${{ env.PACKAGE_DEPENDENCIES }}
           platforms: |
             linux/amd64
