@@ -306,7 +306,10 @@ build_docker_image() {
     local package_dependencies=$(get_package_dependencies "$os_family")
 
     # Get the full patch version and save it to GITHUB_ENV
-    local full_ansible_version=$(lookup_and_save_ansible_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION")
+    local full_ansible_version=$(lookup_and_save_ansible_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION" | tail -n1)
+
+    # Remove any ANSI color codes from the version string
+    full_ansible_version=$(echo "$full_ansible_version" | sed 's/\x1b\[[0-9;]*m//g')
 
     build_args=(
         --build-arg ANSIBLE_VARIATION="$ANSIBLE_VARIATION"
@@ -336,7 +339,7 @@ build_docker_image() {
 
     # Construct the Docker command as an array
     docker_command=(
-        docker --debug buildx build
+        docker buildx build
         "${DOCKER_ADDITIONAL_BUILD_ARGS[@]}"
         "${build_args[@]}"
         --file "src/Dockerfile"

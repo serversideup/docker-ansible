@@ -17,6 +17,9 @@ RUN /usr/bin/local/serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     /usr/bin/local/serversideup-dep-install-debian ${PACKAGE_DEPENDENCIES}
 
 # Install Ansible
-RUN pip3 install ${ANSIBLE_VARIATION}==${ANSIBLE_VERSION}
+RUN set -ex && \
+    echo "🤓 Installing ${ANSIBLE_VARIATION}==${ANSIBLE_VERSION}" && \
+    pip3 install --no-cache-dir ${ANSIBLE_VARIATION}==${ANSIBLE_VERSION} && \
+    ansible --version
 
 CMD ["ansible-playbook", "--version"]
