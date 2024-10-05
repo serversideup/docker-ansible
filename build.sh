@@ -131,6 +131,17 @@ generate_tags() {
     local is_os_family_latest=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
     local is_os_version_latest=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .latest_stable // false" "$ANSIBLE_VERSIONS_FILE")
 
+    # Check if this Python version is the latest for this Ansible version and OS
+    local is_latest_python_for_ansible_and_os
+    is_latest_python_for_ansible_and_os=$(yq e "
+        .ansible_variations[] | 
+        select(.name == \"$ANSIBLE_VARIATION\") | 
+        .versions[] | 
+        select(.version == \"${ANSIBLE_VERSION%%.*}\") | 
+        .python_versions[-1] == \"$PYTHON_VERSION\" and 
+        (.base_os[] | select(.name == \"$BASE_OS\"))
+    " "$ANSIBLE_VERSIONS_FILE")
+
     is_latest_ansible_version_and_python_version() {
         [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ]
     }
@@ -216,13 +227,13 @@ generate_tags() {
         return 0
     }
 
-    # Tag for OS family if it's the latest stable
-    if [ "$is_os_family_latest" == "true" ] && [ "$is_os_version_latest" == "true" ] && are_other_components_latest "$is_os_latest"; then
+    # Tag for OS family if it's the latest stable and Ansible and Python are latest
+    if [ "$is_os_version_latest" == "true" ] && [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ]; then
         add_tag "${tag_prefix}${os_family}"
     fi
 
-    # Tag for specific OS
-    if [ "$is_os_version_latest" == "true" ] && are_other_components_latest "$is_os_latest"; then
+    # Tag for specific OS when Ansible and Python are latest, regardless of OS being latest
+    if [ "$is_ansible_latest" == "true" ] && [ "$is_python_latest" == "true" ]; then
         add_tag "${tag_prefix}${BASE_OS}"
     fi
 
