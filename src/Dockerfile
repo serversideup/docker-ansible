@@ -6,6 +6,8 @@ FROM python:${PYTHON_VERSION}-${BASE_OS_VERSION}
 ARG ANSIBLE_VARIATION=''
 ARG ANSIBLE_VERSION=''
 ARG PACKAGE_DEPENDENCIES=''
+ARG PUID='1000'
+ARG PGID='1000'
 
 ENV DEBUG=false \
     ANSIBLE_WORK_DIR=/ansible \
@@ -15,17 +17,21 @@ ENV DEBUG=false \
 COPY --chown=root:root --chmod=755 src/rootfs /
 
 # Install dependencies based on OS
-RUN /usr/bin/local/serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
-    /usr/bin/local/serversideup-dep-install-debian ${PACKAGE_DEPENDENCIES} && \
+RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
+    serversideup-dep-install-debian ${PACKAGE_DEPENDENCIES} && \
     \
-    # Create default Ansible working directory
-    mkdir -p "${ANSIBLE_WORK_DIR}" && \
-    chmod 1777 "${ANSIBLE_WORK_DIR}" && \
+    # Create Ansible user and group
+    serversideup-create-unprivileged-user ansible "${PUID}" "${PGID}" && \
     \
-    # Create default default Ansible config directory and tmp directory
+    # Create Ansible home directory, Ansible temp directory, and set default hosts file
     mkdir -p "${ANSIBLE_HOME}/tmp" && \
-    chmod 1777 "${ANSIBLE_HOME}" && \
+    echo -e '[local]\nlocalhost ansible_host=127.0.0.1' > "${ANSIBLE_HOME}/hosts" && \
+    chown -R "${PUID}:${PGID}" "${ANSIBLE_HOME}" && \
     chmod 1777 "${ANSIBLE_HOME}/tmp" && \
+    \
+    # Create default Ansible working directory and set permissions
+    mkdir -p "${ANSIBLE_WORK_DIR}" && \
+    chown -R "${PUID}:${PGID}" "${ANSIBLE_WORK_DIR}" && \
     \
     # Install Ansible
     echo "🤓 Installing ${ANSIBLE_VARIATION}==${ANSIBLE_VERSION}" && \

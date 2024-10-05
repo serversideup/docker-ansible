@@ -85,6 +85,7 @@ operating_system_distributions:
         latest_stable: true
         package_dependencies:
           - "git"
+          - "gosu"
           - "libffi-dev"
           - "libhdf5-dev"
           - "libssl-dev"
@@ -102,4 +103,6 @@ operating_system_distributions:
           - "openssh-client"
           - "openssl-dev"
           - "rsync"
+          - "shadow"
           - "sshpass"
+          - "su-exec"
