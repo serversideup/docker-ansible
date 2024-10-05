@@ -1,7 +1,9 @@
 #!/bin/bash
 set -eo pipefail
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Simplify directory references
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+PROJECT_ROOT_DIR="$SCRIPT_DIR"
 
 ANSIBLE_VARIATION=""
 ANSIBLE_VERSION=""
@@ -209,11 +211,17 @@ generate_tags() {
 
 build_docker_image() {
   tags=($(generate_tags))
+  
+  # Get package dependencies from ansible-versions.yml
+  local os_family=$(yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE")
+  local package_dependencies=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .package_dependencies[]" "$ANSIBLE_VERSIONS_FILE" | tr '\n' ' ')
+
   build_args=(
     --build-arg ANSIBLE_VARIATION="$ANSIBLE_VARIATION"
     --build-arg ANSIBLE_VERSION="$ANSIBLE_VERSION"
     --build-arg PYTHON_VERSION="$PYTHON_VERSION"
     --build-arg BASE_OS_VERSION="$BASE_OS"
+    --build-arg PACKAGE_DEPENDENCIES="'$package_dependencies'"
   )
 
   for tag in "${tags[@]}"; do
@@ -223,8 +231,16 @@ build_docker_image() {
   echo_color_message yellow "🐳 Building Docker Image with tags:"
   printf '%s\n' "${tags[@]}"
   
+  # Set default platform if not specified
+  if [ -z "$PLATFORM" ]; then
+    PLATFORM="linux/amd64"
+  fi
+
+  # Add platform to build args
+  build_args+=(--platform "$PLATFORM")
+
   # Construct the full Docker command
-  docker_command="docker build ${DOCKER_ADDITIONAL_BUILD_ARGS[@]} ${build_args[@]} --file \"$PROJECT_ROOT_DIR/Dockerfile\" \"$PROJECT_ROOT_DIR\""
+  docker_command="docker build ${DOCKER_ADDITIONAL_BUILD_ARGS[@]} ${build_args[@]} --file \"src/Dockerfile\" \"$PROJECT_ROOT_DIR\""
   
   # Show the Docker command
   echo_color_message yellow "Docker command to be executed:"
@@ -237,9 +253,20 @@ build_docker_image() {
   printf '%s\n' "${tags[@]}"
 
   if [[ "$CI" == "true" ]]; then
-    echo "DOCKER_TAGS<<EOF" >> $GITHUB_ENV
-    printf '%s\n' "${tags[@]}" >> $GITHUB_ENV
-    echo "EOF" >> $GITHUB_ENV
+    if [[ -n "$GITHUB_ENV" ]]; then
+        echo "DOCKER_TAGS<<EOF" >> "$GITHUB_ENV"
+        printf '%s\n' "${tags[@]}" >> "$GITHUB_ENV"
+        echo "EOF" >> "$GITHUB_ENV"
+        echo_color_message green "✅ Saved Docker Tags to GITHUB_ENV"
+    else
+        echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing to GITHUB_ENV."
+        echo "Docker tags:"
+        printf '%s\n' "${tags[@]}"
+    fi
+  else
+    echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
+    echo "Docker tags:"
+    printf '%s\n' "${tags[@]}"
   fi
 }
 
@@ -252,7 +279,7 @@ help_menu() {
     echo
     echo "At least one of the following options is required:"
     echo "  --variation <variation>   Set the Ansible variation (e.g., ansible, ansible-core)"
-    echo "  --version <version>       Set the Ansible version (e.g., 2.15.0, 2.16.2, 2.17.1)"
+    echo "  --version <version>       Set the Ansible version (e.g., 2.15.3, 2.16.5, 2.17.4)"
     echo "  --python <python_version> Set the Python version (e.g., 3.9, 3.10, 3.11, 3.12)"
     echo "  --os <os>                 Set the base OS (e.g., alpine3.20, bullseye)"
     echo
@@ -262,6 +289,7 @@ help_menu() {
     echo "  --repository <repos>      Space-separated list of Docker repositories (default: 'docker.io/serversideup/ansible ghcr.io/serversideup/ansible')"
     echo "  --ansible-versions-file <file> Path to Ansible versions file (default: ansible-versions.yml in script directory)"
     echo "  --print-tags-only         Print the tags without building the image"
+    echo "  --platform <platform>     Set the platform (default: 'linux/amd64')"
     echo "  --*                       Any additional options will be passed to the docker build command"
 }
 
@@ -310,6 +338,10 @@ while [[ $# -gt 0 ]]; do
         --print-tags-only)
         PRINT_TAGS_ONLY=true
         shift
+        ;;
+        --platform)
+        PLATFORM="$2"
+        shift 2
         ;;
         --help)
         help_menu
@@ -403,6 +435,24 @@ print_tags() {
     local tags=($(generate_tags))
     echo "Docker tags that would be generated (Release type: $RELEASE_TYPE):"
     printf '%s\n' "${tags[@]}" | sort
+
+    # Save to GitHub's environment
+    if [[ $CI == "true" ]]; then
+        if [[ -n "$GITHUB_ENV" ]]; then
+            echo "DOCKER_TAGS<<EOF" >> "$GITHUB_ENV"
+            printf '%s\n' "${tags[@]}" >> "$GITHUB_ENV"
+            echo "EOF" >> "$GITHUB_ENV"
+            echo_color_message green "✅ Saved Docker Tags to GITHUB_ENV"
+        else
+            echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing to GITHUB_ENV."
+            echo "Docker tags:"
+            printf '%s\n' "${tags[@]}"
+        fi
+    else
+        echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
+        echo "Docker tags:"
+        printf '%s\n' "${tags[@]}"
+    fi
 }
 
 # Main execution
