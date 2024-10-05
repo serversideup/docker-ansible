@@ -21,7 +21,7 @@ jobs:
     - name: Assemble Ansible versions into the matrix 😎
       id: get-ansible-versions
       run: |
-        MATRIX_JSON=$(yq -o=json ansible-versions.yml | jq -c '{include: [.ansible_variations[] | select(.versions != null) | .versions[] as $version | (.python_versions // [])[] as $python | (.base_os // [])[] as $os | {ansible_variation: .name, ansible_version: $version.version, python_version: $python, base_os: $os.name, latest_stable: ($version.latest_stable // false)}]}')
+        MATRIX_JSON=$(yq -o=json ansible-versions.yml | jq -c '{include: [.ansible_variations[] | select(.versions != null) as $variation | .versions[] as $version | (.python_versions // [])[] as $python | (.base_os // [])[] as $os | {ansible_variation: $variation.name, ansible_version: $version.version, python_version: $python, base_os: $os.name, latest_stable: ($version.latest_stable // false)}]} | {include: (.include | sort_by(.ansible_version | split(".") | map(tonumber)))}')
         echo "ansible-version-map-json=${MATRIX_JSON}" >> $GITHUB_OUTPUT
         echo "${MATRIX_JSON}" | jq '.'
 
