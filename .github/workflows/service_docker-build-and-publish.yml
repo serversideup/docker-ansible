@@ -25,6 +25,10 @@ jobs:
         echo "ansible-version-map-json=${MATRIX_JSON}" >> $GITHUB_OUTPUT
         echo "${MATRIX_JSON}" | jq '.'
 
+    - name: Debug - Print matrix JSON
+      run: |
+        echo '${{ toJson(steps.get-ansible-versions.outputs.ansible-version-map-json) }}'
+
   build-and-push:
     needs: setup-matrix
     runs-on: ubuntu-24.04
