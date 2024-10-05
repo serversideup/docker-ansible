@@ -18,6 +18,11 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
 
+    - name: Debug ansible-versions.yml content
+      run: |
+        echo "Content of ansible-versions.yml:"
+        cat ansible-versions.yml
+        
     - name: Assemble Ansible versions into the matrix 😎
       id: get-ansible-versions
       run: |
