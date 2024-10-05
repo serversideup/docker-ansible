@@ -11,7 +11,7 @@ PYTHON_VERSION=""
 BASE_OS=""
 GITHUB_REF_NAME="${GITHUB_REF_NAME:-""}"
 RELEASE_TYPE="dev"
-DOCKER_REPOSITORY="${DOCKER_REPOSITORY:-"docker.io/serversideup/ansible ghcr.io/serversideup/ansible"}"
+DOCKER_ORGANIZATIONS="${DOCKER_ORGANIZATIONS:-"docker.io/serversideup ghcr.io/serversideup"}"
 DOCKER_ADDITIONAL_BUILD_ARGS=()
 ANSIBLE_VERSIONS_FILE="${ANSIBLE_VERSIONS_FILE:-$SCRIPT_DIR/ansible-versions.yml}"
 PRINT_TAGS_ONLY=false
@@ -57,12 +57,13 @@ check_vars() {
   return 0
 }
 
-# New function to get latest stable values
-get_latest_stable() {
+fetch_latest_component_versions() {
     local yaml_file="$ANSIBLE_VERSIONS_FILE"
+    local variation="$1"
     
-    # Get latest stable Ansible version
-    local ansible_version=$(yq e ".ansible_versions[] | select(.latest_stable == true) | .version" "$yaml_file")
+    # Get latest stable Ansible version for the specified variation
+    local ansible_version=$(yq e ".ansible_variations[] | select(.name == \"$variation\") | .versions[] | select(.latest_stable == true) | .version" "$yaml_file")
+    ansible_version=$(lookup_pypi_version "$variation" "$ansible_version")
     
     # Get latest stable Python version
     local python_version=$(yq e ".python_versions[] | select(.latest_stable == true) | .name" "$yaml_file")
@@ -73,20 +74,29 @@ get_latest_stable() {
     echo "$ansible_version $python_version $base_os"
 }
 
+lookup_pypi_version() {
+    local variation=$1
+    local version=$2
+    local api_url="https://pypi.org/pypi/${variation}/json"
+    
+    # Check if the version is already a full patch version
+    if [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "$version"
+    else
+        # Fetch the JSON data and extract the latest stable version for the given major.minor
+        local latest_version=$(curl -s "$api_url" | jq -r ".releases | keys[] | select(startswith(\"$version.\") and (contains(\"b\") or contains(\"rc\") | not))" | sort -V | tail -n1)
+        echo "$latest_version"
+    fi
+}
+
+# Update generate_tags function
 generate_tags() {
     local tags=()
     local os_family=$(yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE")
-    local ansible_variation_tag=$(yq e ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .tag_name" "$ANSIBLE_VERSIONS_FILE")
-
-    # Add this check to ensure ansible_variation_tag is not empty
-    if [ -z "$ansible_variation_tag" ]; then
-        echo_color_message red "Error: Could not determine ansible_variation_tag for $ANSIBLE_VARIATION"
-        exit 1
-    fi
 
     # Get latest stable values
     local latest_ansible latest_python latest_os
-    read -r latest_ansible latest_python latest_os <<< $(get_latest_stable)
+    read -r latest_ansible latest_python latest_os <<< $(fetch_latest_component_versions "$ANSIBLE_VARIATION")
 
     # Check if each component is the latest stable
     local is_ansible_latest=$([ "$ANSIBLE_VERSION" == "$latest_ansible" ] && echo true || echo false)
@@ -115,7 +125,8 @@ generate_tags() {
 
     add_tag() {
         local tag=$1
-        for repo in $DOCKER_REPOSITORY; do
+        for org in $DOCKER_ORGANIZATIONS; do
+            local repo="${org}/${ANSIBLE_VARIATION}"
             tags+=("$repo:$tag")
             if [ -n "$GITHUB_REF_NAME" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
                 # Replace the prefix with the GitHub release tag if it exists
@@ -130,50 +141,45 @@ generate_tags() {
     }
 
     # Most specific tag
-    add_tag "${tag_prefix}${ANSIBLE_VERSION}-${ansible_variation_tag}-${BASE_OS}-python${PYTHON_VERSION}"
+    add_tag "${tag_prefix}${ANSIBLE_VERSION}-${BASE_OS}-python${PYTHON_VERSION}"
 
     # Tag without Ansible Version if it's the latest
     if [ "$is_ansible_latest" == "true" ]; then
-        add_tag "${tag_prefix}${ansible_variation_tag}-${BASE_OS}-python${PYTHON_VERSION}"
+        add_tag "${tag_prefix}${BASE_OS}-python${PYTHON_VERSION}"
     fi
 
     # Tag with OS family instead of specific OS if it's the latest in its family
     if [ "$is_os_family_default" == "true" ]; then
-        add_tag "${tag_prefix}${ANSIBLE_VERSION}-${ansible_variation_tag}-${os_family}-python${PYTHON_VERSION}"
+        add_tag "${tag_prefix}${ANSIBLE_VERSION}-${os_family}-python${PYTHON_VERSION}"
     fi
 
     # Tag without OS if it's the default
     if [ "$is_os_latest" == "true" ]; then
-        add_tag "${tag_prefix}${ANSIBLE_VERSION}-${ansible_variation_tag}-python${PYTHON_VERSION}"
+        add_tag "${tag_prefix}${ANSIBLE_VERSION}-python${PYTHON_VERSION}"
     fi
 
     # Tag without Python Version if it's the latest
     if [ "$is_python_latest" == "true" ]; then
-        add_tag "${tag_prefix}${ANSIBLE_VERSION}-${ansible_variation_tag}-${BASE_OS}"
+        add_tag "${tag_prefix}${ANSIBLE_VERSION}-${BASE_OS}"
     fi
 
     # Tag without Python Version or OS if both are default
     if [ "$is_python_latest" == "true" ] && [ "$is_os_latest" == "true" ]; then
-        add_tag "${tag_prefix}${ANSIBLE_VERSION}-${ansible_variation_tag}"
+        add_tag "${tag_prefix}${ANSIBLE_VERSION}"
     fi
 
     # Most general tag if everything is default
     if is_default_release; then
-        add_tag "${tag_prefix}${ansible_variation_tag}"
-        add_tag "${tag_prefix}${ANSIBLE_VERSION}"
         add_tag "$RELEASE_TYPE"
         if [ -n "$GITHUB_REF_NAME" ] && [[ "$RELEASE_TYPE" == "latest" || "$RELEASE_TYPE" == "beta" ]]; then
             add_tag "${GITHUB_REF_NAME}"
         fi
     fi
 
-    # Add these new conditions after the existing tag generations:
-
     # Function to check if all other components are latest stable
     are_other_components_latest() {
         local exclude=$1
         local conditions=("$is_ansible_latest" "$is_python_latest" "$is_os_latest")
-        local latest_ansible_variation=$(yq e '.ansible_variations[] | select(.latest_stable == true) | .name' "$ANSIBLE_VERSIONS_FILE")
         
         for component in "${conditions[@]}"; do
             if [ "$component" != "$exclude" ] && [ "$component" != "true" ]; then
@@ -181,8 +187,7 @@ generate_tags() {
             fi
         done
         
-        [ "$ANSIBLE_VARIATION" == "$latest_ansible_variation" ]
-        return $?
+        return 0
     }
 
     # Tag for OS family if it's the latest stable
@@ -201,7 +206,7 @@ generate_tags() {
     fi
 
     # Tag for Ansible version (only if everything else is latest)
-    if [ "$is_python_latest" == "true" ] && [ "$is_os_latest" == "true" ] && [ "$is_variation_latest" == "true" ]; then
+    if are_other_components_latest "$is_ansible_latest"; then
         add_tag "${tag_prefix}${ANSIBLE_VERSION}"
     fi
 
@@ -216,9 +221,12 @@ build_docker_image() {
   local os_family=$(yq e ".operating_system_distributions[] | select(.versions[].name == \"$BASE_OS\") | .name" "$ANSIBLE_VERSIONS_FILE")
   local package_dependencies=$(yq e ".operating_system_distributions[] | select(.name == \"$os_family\") | .versions[] | select(.name == \"$BASE_OS\") | .package_dependencies[]" "$ANSIBLE_VERSIONS_FILE" | tr '\n' ' ')
 
+  # Get the full patch version
+  local full_ansible_version=$(lookup_pypi_version "$ANSIBLE_VARIATION" "$ANSIBLE_VERSION")
+
   build_args=(
     --build-arg ANSIBLE_VARIATION="$ANSIBLE_VARIATION"
-    --build-arg ANSIBLE_VERSION="$ANSIBLE_VERSION"
+    --build-arg ANSIBLE_VERSION="$full_ansible_version"
     --build-arg PYTHON_VERSION="$PYTHON_VERSION"
     --build-arg BASE_OS_VERSION="$BASE_OS"
     --build-arg PACKAGE_DEPENDENCIES="'$package_dependencies'"
@@ -249,9 +257,6 @@ build_docker_image() {
   # Execute the Docker command
   eval $docker_command
 
-  echo_color_message green "✅ Docker Image Built with tags:"
-  printf '%s\n' "${tags[@]}"
-
   if [[ "$CI" == "true" ]]; then
     if [[ -n "$GITHUB_ENV" ]]; then
         echo "DOCKER_TAGS<<EOF" >> "$GITHUB_ENV"
@@ -260,13 +265,9 @@ build_docker_image() {
         echo_color_message green "✅ Saved Docker Tags to GITHUB_ENV"
     else
         echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing to GITHUB_ENV."
-        echo "Docker tags:"
-        printf '%s\n' "${tags[@]}"
     fi
   else
     echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
-    echo "Docker tags:"
-    printf '%s\n' "${tags[@]}"
   fi
 }
 
@@ -328,7 +329,7 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
         --repository)
-        DOCKER_REPOSITORY="$2"
+        DOCKER_ORGANIZATIONS="$2"
         shift 2
         ;;
         --ansible-versions-file)
@@ -371,14 +372,17 @@ if [ -z "$ANSIBLE_VARIATION" ]; then
     echo_color_message green "Using default Ansible variation: $ANSIBLE_VARIATION"
 fi
 
-# After argument parsing, add this validation block:
-
+# Update the validation block
 validate_option() {
     local option=$1
     local value=$2
     local yq_query=$3
     
     if [ -n "$value" ]; then
+        if [[ $option == "Ansible version" ]]; then
+            # For Ansible version, we'll validate it later when we get the full version
+            return
+        fi
         local valid_options
         valid_options=$(yq e "$yq_query" "$ANSIBLE_VERSIONS_FILE" | tr '\n' ' ')
         if [[ ! " $valid_options " =~ " $value " ]]; then
@@ -392,13 +396,13 @@ validate_option() {
 
 # Validate options
 validate_option "Ansible variation" "$ANSIBLE_VARIATION" '.ansible_variations[].name'
-validate_option "Ansible version" "$ANSIBLE_VERSION" '.ansible_versions[].version'
+validate_option "Ansible version" "$ANSIBLE_VERSION" ".ansible_variations[] | select(.name == \"$ANSIBLE_VARIATION\") | .versions[].version"
 validate_option "Python version" "$PYTHON_VERSION" '.python_versions[].name'
 validate_option "Base OS" "$BASE_OS" '.operating_system_distributions[].versions[].name'
 
 if [ -n "$ANSIBLE_VARIATION" ] && [ -z "$ANSIBLE_VERSION" ] && [ -z "$PYTHON_VERSION" ] && [ -z "$BASE_OS" ]; then
     echo_color_message yellow "Automatically filling in missing parameters based on ansible-versions.yml"
-    read -r ANSIBLE_VERSION PYTHON_VERSION BASE_OS <<< $(get_latest_stable)
+    read -r ANSIBLE_VERSION PYTHON_VERSION BASE_OS <<< $(fetch_latest_component_versions "$ANSIBLE_VARIATION")
     echo_color_message green "Using Ansible version: $ANSIBLE_VERSION"
     echo_color_message green "Using Python version: $PYTHON_VERSION"
     echo_color_message green "Using Base OS: $BASE_OS"
@@ -414,7 +418,7 @@ else
     # Fill in missing values with latest stable
     if [ -z "$ANSIBLE_VERSION" ] || [ -z "$PYTHON_VERSION" ] || [ -z "$BASE_OS" ]; then
         echo_color_message yellow "Automatically filling in missing parameters based on ansible-versions.yml"
-        read -r latest_ansible latest_python latest_os <<< $(get_latest_stable)
+        read -r latest_ansible latest_python latest_os <<< $(fetch_latest_component_versions "$ANSIBLE_VARIATION")
         if [ -z "$ANSIBLE_VERSION" ]; then
             ANSIBLE_VERSION=$latest_ansible
             echo_color_message green "Using Ansible version: $ANSIBLE_VERSION"
@@ -445,13 +449,9 @@ print_tags() {
             echo_color_message green "✅ Saved Docker Tags to GITHUB_ENV"
         else
             echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing to GITHUB_ENV."
-            echo "Docker tags:"
-            printf '%s\n' "${tags[@]}"
         fi
     else
         echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
-        echo "Docker tags:"
-        printf '%s\n' "${tags[@]}"
     fi
 }
 
