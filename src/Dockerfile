@@ -9,7 +9,8 @@ ARG PACKAGE_DEPENDENCIES=''
 
 ENV DEBUG=false \
     ANSIBLE_WORK_DIR=/ansible \
-    ANSIBLE_HOME=/etc/ansible
+    ANSIBLE_HOME=/etc/ansible \
+    ANSIBLE_COLLECTIONS_PATH=/etc/ansible/collections
 
 COPY --chown=root:root --chmod=755 src/rootfs /
 
