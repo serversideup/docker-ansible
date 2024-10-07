@@ -50,11 +50,6 @@ Versions are made available with `ansible` and `ansible-core`. Everything is ver
 > In almost all cases you will need to mount a volume to the Ansible "working directory" (default: `/ansible`) and your SSH configurations (usually `~/.ssh`).
 
 ```bash
-# Run the container in interactive mode and remove it when done
-# Mount your SSH directory
-# Mount your current directory to the container
-# Run the playbook in your current 
-
 docker run --rm -it \
   -v "$HOME/.ssh:/home/ansible/.ssh" \
   -v "$(pwd):/ansible" \
@@ -64,13 +59,6 @@ docker run --rm -it \
 ### Change the "run as" user, PUID and PGID
 
 ```bash
-# Run the container in interactive mode and remove it when done
-# Mount your SSH directory
-# Mount your current directory to the container
-# Set the PUID and PGID
-# Set the "run as" user
-# Run the playbook in your current directory
-
 docker run --rm -it \
   -v "$HOME/.ssh:/home/ansible/.ssh" \
   -v "$(pwd):/ansible" \
@@ -81,11 +69,6 @@ docker run --rm -it \
 
 ### Run a shell
 ```bash
-# Run the container in interactive mode and remove it when done
-# Mount your SSH directory
-# Mount your current directory to the container
-# Run a shell (can use /bin/bash on Debian)
-
 docker run --rm -it \
   -v "$HOME/.ssh:/home/ansible/.ssh" \
   -v "$(pwd):/ansible" \
