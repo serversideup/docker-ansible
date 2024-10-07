@@ -77,7 +77,7 @@ build_docker_image() {
     
     # Set default platform if not specified
     if [ -z "$PLATFORM" ]; then
-        PLATFORM="linux/amd64"
+        PLATFORM=$(detect_platform)
     fi
 
     # Add platform to build args
@@ -117,6 +117,22 @@ check_vars() {
     fi
   done
   return 0
+}
+
+detect_platform() {
+    local arch=$(uname -m)
+    case $arch in
+        x86_64)
+            echo "linux/amd64"
+            ;;
+        arm64|aarch64)
+            echo "linux/arm64/v8"
+            ;;
+        *)
+            echo "Unsupported architecture: $arch" >&2
+            exit 1
+            ;;
+    esac
 }
 
 echo_color_message (){
