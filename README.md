@@ -25,7 +25,7 @@
 ## Usage
 Getting started is easy. Here's a few tips on how to use this image.
 
-## Choose between `ansible` and `ansible-core`
+### Choose between `ansible` and `ansible-core`
 > [!NOTE]  
 > Our images are available on Docker Hub and GitHub Container Registry 🥳
 > **DockerHub:**
