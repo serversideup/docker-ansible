@@ -53,7 +53,8 @@ Versions are made available with `ansible` and `ansible-core`. Everything is ver
 # Run the container in interactive mode and remove it when done
 # Mount your SSH directory
 # Mount your current directory to the container
-# Run the playbook in your current directory
+# Run the playbook in your current 
+
 docker run --rm -it \
   -v "$HOME/.ssh:/home/ansible/.ssh" \
   -v "$(pwd):/ansible" \
@@ -69,6 +70,7 @@ docker run --rm -it \
 # Set the PUID and PGID
 # Set the "run as" user
 # Run the playbook in your current directory
+
 docker run --rm -it \
   -v "$HOME/.ssh:/home/ansible/.ssh" \
   -v "$(pwd):/ansible" \
@@ -83,6 +85,7 @@ docker run --rm -it \
 # Mount your SSH directory
 # Mount your current directory to the container
 # Run a shell (can use /bin/bash on Debian)
+
 docker run --rm -it \
   -v "$HOME/.ssh:/home/ansible/.ssh" \
   -v "$(pwd):/ansible" \
