@@ -25,6 +25,10 @@ function ui_set_green {
     printf $'\033[0;32m'
 }
 
+function ui_set_red {
+    printf $'\033[0;31m'
+}
+
 function ui_reset_colors {
     printf "\e[0m"
 }
