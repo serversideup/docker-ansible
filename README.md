@@ -6,7 +6,7 @@
 	<a href="https://github.com/serversideup/docker-ansible/blob/main/LICENSE" target="_blank"><img src="https://badgen.net/github/license/serversideup/docker-ansible" alt="License"></a>
 	<a href="https://github.com/sponsors/serversideup"><img src="https://badgen.net/badge/icon/Support%20Us?label=GitHub%20Sponsors&color=orange" alt="Support us"></a>
   <br />
-  <a href="https://hub.docker.com/r/serversideup/ansible/"><img alt="Docker Hub Pulls" src="https://img.shields.io/docker/pulls/serversideup/ansible?label=serversideup%2Fansible%20pulls"></a><a href="https://hub.docker.com/r/serversideup/ansible-core/"><img alt="Docker Hub Pulls" src="https://img.shields.io/docker/pulls/serversideup/ansible?label=serversideup%2Fansible-core%20pulls"></a>
+  <a href="https://hub.docker.com/r/serversideup/ansible/"><img alt="serversideup/ansible pulls" src="https://img.shields.io/docker/pulls/serversideup/ansible?label=serversideup%2Fansible%20pulls"></a><a href="https://hub.docker.com/r/serversideup/ansible-core/"><img alt="serversideup/ansible-core pulls" src="https://img.shields.io/docker/pulls/serversideup/ansible-core?label=serversideup%2Fansible-core%20pulls"></a>
   <a href="https://serversideup.net/discord"><img alt="Discord" src="https://img.shields.io/discord/910287105714954251?color=blueviolet"></a>
 </p>
 
