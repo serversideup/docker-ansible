@@ -14,13 +14,14 @@
 `serversideup/ansible` is a lightweight solution for running Ansible in a containerized environment. This project builds upon many things we learned from [willhallonline/docker-ansible](https://github.com/willhallonline/docker-ansible). It provides a secure and isolated environment for running Ansible tasks, with support for both Alpine and Debian-based distributions and gives you the flexibility to run Ansible as an unprivileged user without the headaches of proper file permissions.
 
 ## Features
-- 🐧 Supports both Alpine and Debian-based distributions
-- 🐍 Built on official Python images (choose your python version)
-- 🔒 Run ansible as an unprivileged user
-- 📌 Pin your Ansible version to a specific patch release
-- 🔧 Customize your "run as" user
-- 🔑 Set your own PUID and PGID
-- 📦 Available on Docker Hub and GitHub Container Registry
+- 🐧 **Debian and Alpine** - Choose your OS
+- 🐍 **Built on official Python images** - Choose your Python version
+- 🔒 **Unprivileged user** - Choose to run as root or an unprivileged user
+- 📌 **Pinned Ansible Version** - Set your Ansible version down to the patch version
+- 🔧 **Customize your "run as" user** - Customize the username to run as
+- 🔑 **Set your own PUID and PGID** - Have the PUID and PGID match your host user
+- 📦 **DockerHub and GitHub Container Registry** - Choose where you'd like to pull your image from
+- 🤖 **Multi-architecture** - Every image ships with x86_64 and arm64 architectures
 
 ## Usage
 Getting started is easy. Here's a few tips on how to use this image.
