@@ -27,16 +27,16 @@
 Getting started is easy. Here's a few tips on how to use this image.
 
 ### Choose between `ansible` and `ansible-core`
-> [!NOTE]  
-> Our images are available on Docker Hub and GitHub Container Registry 🥳
-> 
-> **DockerHub:**
-> - [serversideup/ansible](https://hub.docker.com/r/serversideup/ansible)
-> - [serversideup/ansible-core](https://hub.docker.com/r/serversideup/ansible-core)
->
-> **GitHub Container Registry:**
-> - [ghcr.io/serversideup/ansible](https://github.com/serversideup/docker-ansible/pkgs/container/ansible)
-> - [ghcr.io/serversideup/ansible-core](https://github.com/serversideup/docker-ansible/pkgs/container/ansible-core)
+
+Our images are available on Docker Hub and GitHub Container Registry 🥳
+
+**DockerHub:**
+- [serversideup/ansible](https://hub.docker.com/r/serversideup/ansible)
+- [serversideup/ansible-core](https://hub.docker.com/r/serversideup/ansible-core)
+
+**GitHub Container Registry:**
+- [ghcr.io/serversideup/ansible](https://github.com/serversideup/docker-ansible/pkgs/container/ansible)
+- [ghcr.io/serversideup/ansible-core](https://github.com/serversideup/docker-ansible/pkgs/container/ansible-core)
 
 Versions are made available with `ansible` and `ansible-core`. Everything is versioned appropriately according to the [Ansible release process](https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html).
 
