@@ -40,10 +40,10 @@ Our images are available on Docker Hub and GitHub Container Registry 🥳
 
 Versions are made available with `ansible` and `ansible-core`. Everything is versioned appropriately according to the [Ansible release process](https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html).
 
-| Variation | Default Latest Image | Description |
+| Variation | Image Size | Description |
 | --------- | -------------------- | ----------- |
-| `serversideup/ansible-core` |**Debian**: [![DockerHub serversideup/ansible-core](https://img.shields.io/docker/image-size/serversideup/ansible-core/latest)](https://hub.docker.com/r/serversideup/ansible-core)<br>**Alpine**: [![DockerHub serversideup/ansible-core:alpine](https://img.shields.io/docker/image-size/serversideup/ansible-core/alpine)](https://hub.docker.com/r/serversideup/ansible-core/tags?name=alpine) | Runs Ansible with `ansible-core` only. Provides a lightweight installation with basic components, focusing on core automation tasks. Ideal for rapid configuration changes and environments prioritizing simplicity and resource optimization. |
-| `serversideup/ansible` | **Debian**: [![DockerHub serversideup/ansible](https://img.shields.io/docker/image-size/serversideup/ansible/latest)](https://hub.docker.com/r/serversideup/ansible)<br>**Alpine**: [![DockerHub serversideup/ansible:alpine](https://img.shields.io/docker/image-size/serversideup/ansible/alpine)](https://hub.docker.com/r/serversideup/ansible/tags?name=alpine) | Comprehensive ecosystem including Ansible Core, Tower, Galaxy, etc. Offers a full package with plugins, dependencies, and modules for diverse automation scenarios across hybrid environments. Debian-based image provides full functionality, while Alpine-based image offers a lightweight alternative. |
+| `serversideup/ansible-core` |[![DockerHub serversideup/ansible-core:alpine](https://img.shields.io/docker/image-size/serversideup/ansible-core/alpine?label=alpine)](https://hub.docker.com/r/serversideup/ansible-core/tags?name=alpine)<br>[![DockerHub serversideup/ansible-core](https://img.shields.io/docker/image-size/serversideup/ansible-core/latest?label=debian)](https://hub.docker.com/r/serversideup/ansible-core) | Lightweight, core installation of Ansible. |
+| `serversideup/ansible` | [![DockerHub serversideup/ansible:alpine](https://img.shields.io/docker/image-size/serversideup/ansible/alpine?label=alpine)](https://hub.docker.com/r/serversideup/ansible/tags?name=alpine)<br>[![DockerHub serversideup/ansible](https://img.shields.io/docker/image-size/serversideup/ansible/latest?label=debian)](https://hub.docker.com/r/serversideup/ansible) | "Batteries included" installation of Ansible. |
 
 ### Run a playbook
 > [!IMPORTANT]  
