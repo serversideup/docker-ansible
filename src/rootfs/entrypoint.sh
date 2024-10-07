@@ -3,10 +3,15 @@ set -e
 default_uid='1000'
 default_gid='1000'
 default_unprivileged_user='ansible'
+run_as_user=${RUN_AS_USER:-}
 
 if [ "$DEBUG" = "true" ]; then
     set -x
 fi
+
+######################################################
+# Functions
+######################################################
 
 debug_print() {
     if [ "$DEBUG" = "true" ]; then
@@ -21,6 +26,10 @@ switch_user() {
         exec gosu "$default_unprivileged_user" "$@"
     fi
 }
+
+######################################################
+# Main
+######################################################
 
 # Change the Ansible user and group to the specified UID and GID if they are not the default
 if { [ ! -z "${PUID}" ] && [ "${PUID}" != "$default_uid" ]; } || { [ ! -z "${PGID}" ] && [ "${PGID}" != "$default_gid" ]; }; then
@@ -45,11 +54,45 @@ if { [ ! -z "${PUID}" ] && [ "${PUID}" != "$default_uid" ]; } || { [ ! -z "${PGI
     groupmod -g "${PGID}" ansible 2>&1 >/dev/null || echo "Error changing group ID."
 
     debug_print "Changing ownership of all files and directories..."
-    # Change all files and directories owned by user 1000 or group 1000 to the new user and group
-    find / \( -user "$default_uid" -o -group "$default_gid" \) -exec chown -h "${PUID}:${PGID}" {} + 2>/dev/null || echo "Error changing ownership of files and directories."
+    find "$ANSIBLE_HOME" \( -user "$default_uid" -o -group "$default_gid" \) -exec chown -h "${PUID}:${PGID}" {} + 2>/dev/null || echo "Error changing ownership of files and directories."
 
     # Update user's home directory permissions
-    chown -R "${PUID}:${PGID}" "/home/${default_unprivileged_user}"
+    chown "${PUID}:${PGID}" "/home/${default_unprivileged_user}"
+fi
+
+# Rename the Ansible user to the RUN_AS_USER if set
+if [ ! -z "$run_as_user" ] && [ "$run_as_user" != "$default_unprivileged_user" ]; then
+
+    debug_print "Renaming user \"$default_unprivileged_user\" to \"$run_as_user\"..."
+    
+    # Check if we're on Alpine or Debian
+    if [ -f /etc/alpine-release ]; then
+        # Alpine Linux
+        usermod -l "$run_as_user" "$default_unprivileged_user"
+        groupmod -n "$run_as_user" "$default_unprivileged_user"
+        
+        # Update home directory
+        usermod -d "/home/$run_as_user" -m "$run_as_user"
+    elif [ -f /etc/debian_version ]; then
+        # Debian
+        usermod -l "$run_as_user" "$default_unprivileged_user"
+        groupmod -n "$run_as_user" "$default_unprivileged_user"
+        
+        # Update home directory
+        usermod -d "/home/$run_as_user" -m "$run_as_user"
+        
+        # Update default group
+        usermod -g "$run_as_user" "$run_as_user"
+    else
+        echo "Unsupported distribution. User renaming skipped."
+    fi
+
+    # Create a symbolic link to mimic macOS home folder
+    mkdir -p "/Users"
+    ln -s "/home/$run_as_user" "/Users/$run_as_user"
+    
+    # Update the default_unprivileged_user variable
+    default_unprivileged_user="$run_as_user"
 fi
 
 # Run the command as the unprivileged user if PUID and PGID are set
