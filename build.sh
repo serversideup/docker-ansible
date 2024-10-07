@@ -62,7 +62,7 @@ save_to_github_env() {
             echo_color_message yellow "⚠️ GITHUB_ENV is not set. Skipping writing ${key} to GITHUB_ENV."
         fi
     else
-        echo_color_message yellow "Not running in CI environment. Skipping writing to GITHUB_ENV."
+        echo_color_message yellow "Not running in CI environment. Skipping writing ${key} to GITHUB_ENV."
     fi
 }
 
@@ -150,7 +150,6 @@ lookup_and_save_ansible_version() {
         exit 1
     fi
     
-    echo_color_message green "Looked up Ansible version: ${ansible_patch_version}"
     save_to_github_env "ANSIBLE_PATCH_VERSION" "${ansible_patch_version}"
     
     echo "${ansible_patch_version}"
