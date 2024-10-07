@@ -49,31 +49,43 @@ Versions are made available with `ansible` and `ansible-core`. Everything is ver
 > In almost all cases you will need to mount a volume to the Ansible "working directory" (default: `/ansible`) and your SSH configurations (usually `~/.ssh`).
 
 ```bash
-docker run --rm -it \ # Run the container in interactive mode and remove it when done
-  -v "$HOME/.ssh:/home/ansible/.ssh" \ # Mount your SSH directory
-  -v "$(pwd):/ansible" \ # Mount your current directory to the container
-  serversideup/ansible:latest ansible-playbook playbook.yml # Run the playbook in your current directory
+# Run the container in interactive mode and remove it when done
+# Mount your SSH directory
+# Mount your current directory to the container
+# Run the playbook in your current directory
+docker run --rm -it \
+  -v "$HOME/.ssh:/home/ansible/.ssh" \
+  -v "$(pwd):/ansible" \
+  serversideup/ansible:latest ansible-playbook playbook.yml
 ```
 
 ### Change the "run as" user, PUID and PGID
-> [!IMPORTANT]  
-> If you change the PUID or PGID, you must also change the PUID and PGID of the "run as" user.
 
 ```bash
-docker run --rm -it \ # Run the container in interactive mode and remove it when done
-  -v "$HOME/.ssh:/home/ansible/.ssh" \ # Mount your SSH directory
-  -v "$(pwd):/ansible" \ # Mount your current directory to the container
-  -e PUID=9999 -e PGID=9999 \ # Set the PUID and PGID
-  -e RUN_AS_USER=bob \ # Set the "run as" user
-  serversideup/ansible:latest ansible-playbook playbook.yml # Run the playbook in your current directory
+# Run the container in interactive mode and remove it when done
+# Mount your SSH directory
+# Mount your current directory to the container
+# Set the PUID and PGID
+# Set the "run as" user
+# Run the playbook in your current directory
+docker run --rm -it \
+  -v "$HOME/.ssh:/home/ansible/.ssh" \
+  -v "$(pwd):/ansible" \
+  -e PUID=9999 -e PGID=9999 \
+  -e RUN_AS_USER=bob \
+  serversideup/ansible:latest ansible-playbook playbook.yml
 ```
 
 ### Run a shell
 ```bash
-docker run --rm -it \ # Run the container in interactive mode and remove it when done
-  -v "$HOME/.ssh:/home/ansible/.ssh" \ # Mount your SSH directory
-  -v "$(pwd):/ansible" \ # Mount your current directory to the container
-  serversideup/ansible:latest /bin/sh # Run a shell (can use /bin/bash on Debian)
+# Run the container in interactive mode and remove it when done
+# Mount your SSH directory
+# Mount your current directory to the container
+# Run a shell (can use /bin/bash on Debian)
+docker run --rm -it \
+  -v "$HOME/.ssh:/home/ansible/.ssh" \
+  -v "$(pwd):/ansible" \
+  serversideup/ansible:latest /bin/sh
 ```
 
 ### Environment Variables
