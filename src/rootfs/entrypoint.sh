@@ -3,7 +3,7 @@ set -e
 default_uid='1000'
 default_gid='1000'
 default_unprivileged_user='ansible'
-run_as_user=${RUN_AS_USER:-}
+run_as_user=${RUN_AS_USER:-"${default_unprivileged_user}"}
 
 if [ "$DEBUG" = "true" ]; then
     set -x
@@ -21,9 +21,9 @@ debug_print() {
 
 switch_user() {
     if command -v su-exec >/dev/null 2>&1; then
-        exec su-exec "$default_unprivileged_user" "$@"
+        exec su-exec "$run_as_user" "$@"
     else
-        exec gosu "$default_unprivileged_user" "$@"
+        exec gosu "$run_as_user" "$@"
     fi
 }
 
@@ -60,8 +60,8 @@ if { [ ! -z "${PUID}" ] && [ "${PUID}" != "$default_uid" ]; } || { [ ! -z "${PGI
     chown "${PUID}:${PGID}" "/home/${default_unprivileged_user}"
 fi
 
-# Rename the Ansible user to the RUN_AS_USER if set
-if [ ! -z "$run_as_user" ] && [ "$run_as_user" != "$default_unprivileged_user" ]; then
+# Rename the Ansible user if it doesn't match the default
+if [ "$run_as_user" != "$default_unprivileged_user" ]; then
 
     debug_print "Renaming user \"$default_unprivileged_user\" to \"$run_as_user\"..."
     
@@ -90,16 +90,15 @@ if [ ! -z "$run_as_user" ] && [ "$run_as_user" != "$default_unprivileged_user" ]
     # Create a symbolic link to mimic macOS home folder
     mkdir -p "/Users"
     ln -s "/home/$run_as_user" "/Users/$run_as_user"
-    
-    # Update the default_unprivileged_user variable
-    default_unprivileged_user="$run_as_user"
+
 fi
 
-# Run the command as the unprivileged user if PUID and PGID are set
-if [ ! -z "${PUID}" ] || [ ! -z "${PGID}" ]; then
-    debug_print "Running command as $default_unprivileged_user..."
+# Run the command as the unprivileged user if PUID, PGID are set, or if RUN_AS_USER is different from default
+if [ ! -z "${PUID}" ] || [ ! -z "${PGID}" ] || [ "$run_as_user" != "$default_unprivileged_user" ]; then
+    debug_print "Running command as \"$run_as_user\"..."
     switch_user "$@"
 else
     debug_print "Running command as root..."
     exec "$@"
 fi
+

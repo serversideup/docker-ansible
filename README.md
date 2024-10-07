@@ -80,9 +80,9 @@ You can customize the image easily with the following environment variables:
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
-| `PUID` | `1000` | The user ID of the unprivileged user |
-| `PGID` | `1000` | The group ID of the unprivileged user |
-| `RUN_AS_USER` | `ansible` | The username of the unprivileged user |
+| `PUID` | `1000` | Set the User ID that you'd like to run Ansible as |
+| `PGID` | `1000` | Set the Group ID that you'd like to run Ansible as |
+| `RUN_AS_USER` | `ansible` | The username you'd like to run Ansible as (this will be created for you and will default to an **unprivileged** user) |
 | `DEBUG` | `false` | Enable debug output of container startup |
 
 
