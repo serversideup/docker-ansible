@@ -46,7 +46,7 @@ add_tag() {
             break
         fi
         tags+=("${org}/${BUILD_ANSIBLE_VARIATION}:${full_tag}")
-        if [ -n "$GITHUB_REF_NAME" ] && [ "${full_tag}" != "$RELEASE_TYPE" ]; then
+        if [ -n "$GITHUB_REF_NAME" ] && [ "${full_tag}" != "$RELEASE_TYPE" ] && [ "$GITHUB_REF_TYPE" == "tag" ]; then
             tags+=("${org}/${BUILD_ANSIBLE_VARIATION}:${full_tag}-${GITHUB_REF_NAME}")
         fi
     done
