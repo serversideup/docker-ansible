@@ -53,42 +53,20 @@ Our Docker images use a comprehensive tagging system for flexibility and specifi
 
 | Component | Example |
 |-----------|---------|
-| Ansible version | `2.15.3`, `2.15` |
-| Base OS | `alpine3.18`, `ubuntu22.04` |
+| Ansible version | `2.17.3`, `2.17` |
+| Base OS | `alpine3.20`, `bullseye` |
 | Python version | `python3.11` |
-| OS family | `alpine`, `ubuntu` |
+| OS family | `alpine`, `debian` |
 
 ### Tag Examples
 
 | Tag | Meaning |
 |-----|---------|
-| `2.15.3-alpine3.18-python3.11` | Most specific |
-| `2.15.3-alpine3.18` | Latest Python for specific Ansible and OS |
-| `2.15.3` | Latest OS and Python for specific Ansible |
-| `2.15-alpine3.18-python3.11` | Latest patch for Ansible minor version |
-| `2.15.3-alpine-python3.11` | OS family-based |
-
-### Automatic "Latest" Tags
-
-The system generates "latest" tags based on:
-- Latest Ansible patch/minor version
-- Latest Python version
-- Latest OS version within a family
-- Default OS family
-
-Examples: `2.15-alpine3.18`, `alpine3.18-python3.11`, `alpine`
-
-### Release Types
-
-Tags may include release types: `latest` (stable), `beta`, `rc` (release candidate)
-
-### Benefits
-
-1. Pin to specific versions for stability
-2. Easily upgrade to latest patches or minor versions
-3. Choose between different OS families and versions
-4. Select specific Python versions
-5. Use latest stable versions with minimal specification
+| `2.17.3-alpine3.20-python3.11` | Most specific |
+| `2.17.3-alpine3.20` | Latest Python for specific Ansible and OS |
+| `2.17.3` | Latest OS and Python for specific Ansible |
+| `2.17-alpine3.20-python3.11` | Latest patch for Ansible minor version |
+| `2.17-alpine-python3.11` | OS family-based |
 
 ## Run a playbook
 > [!IMPORTANT]  
