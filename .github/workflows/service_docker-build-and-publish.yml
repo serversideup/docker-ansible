@@ -71,10 +71,10 @@ jobs:
           cache-from: type=gha,mode=max
           cache-to: type=gha,mode=max
           build-args: |
-            PYTHON_VERSION=${{ matrix.python_version }}
-            BASE_OS_VERSION=${{ matrix.base_os }}
-            ANSIBLE_VARIATION=${{ matrix.ansible_variation }}
-            ANSIBLE_VERSION=${{ env.ANSIBLE_VERSION }}
+            BUILD_PYTHON_VERSION=${{ matrix.python_version }}
+            BUILD_BASE_OS_VERSION=${{ matrix.base_os }}
+            BUILD_ANSIBLE_VARIATION=${{ matrix.ansible_variation }}
+            BUILD_ANSIBLE_PATCH_VERSION=${{ env.BUILD_ANSIBLE_PATCH_VERSION }}
             PACKAGE_DEPENDENCIES=${{ env.PACKAGE_DEPENDENCIES }}
           platforms: |
             linux/amd64

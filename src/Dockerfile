@@ -1,10 +1,10 @@
-ARG PYTHON_VERSION='3.12'
-ARG BASE_OS_VERSION='bullseye'
+ARG BUILD_PYTHON_VERSION='3.12'
+ARG BUILD_BASE_OS_VERSION='bullseye'
 
-FROM python:${PYTHON_VERSION}-${BASE_OS_VERSION}
+FROM python:${BUILD_PYTHON_VERSION}-${BUILD_BASE_OS_VERSION}
 
-ARG ANSIBLE_VARIATION=''
-ARG ANSIBLE_VERSION=''
+ARG BUILD_ANSIBLE_VARIATION=''
+ARG BUILD_ANSIBLE_PATCH_VERSION=''
 ARG PACKAGE_DEPENDENCIES=''
 ARG PUID='1000'
 ARG PGID='1000'
@@ -40,8 +40,8 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     ln -s /ssh /home/ansible/.ssh && \
     \
     # Install Ansible
-    echo "🤓 Installing ${ANSIBLE_VARIATION}==${ANSIBLE_VERSION}" && \
-    pip3 install --no-cache-dir "${ANSIBLE_VARIATION}==${ANSIBLE_VERSION}" && \
+    echo "🤓 Installing ${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
+    pip3 install --no-cache-dir "${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
     \
     # Verify Ansible installation
     ansible --version
