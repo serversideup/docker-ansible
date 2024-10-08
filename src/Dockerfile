@@ -33,6 +33,12 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     mkdir -p "${ANSIBLE_WORK_DIR}" && \
     chown -R "${PUID}:${PGID}" "${ANSIBLE_WORK_DIR}" && \
     \
+    # Create SSH directory for unprivileged user symbolic link target
+    mkdir -p /ssh && \
+    chmod 700 /ssh && \
+    chown "${PUID}:${PGID}" /ssh && \
+    ln -s /ssh /home/ansible/.ssh && \
+    \
     # Install Ansible
     echo "🤓 Installing ${ANSIBLE_VARIATION}==${ANSIBLE_VERSION}" && \
     pip3 install --no-cache-dir "${ANSIBLE_VARIATION}==${ANSIBLE_VERSION}" && \

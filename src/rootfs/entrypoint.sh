@@ -54,10 +54,8 @@ if { [ ! -z "${PUID}" ] && [ "${PUID}" != "$default_uid" ]; } || { [ ! -z "${PGI
     groupmod -g "${PGID}" ansible 2>&1 >/dev/null || echo "Error changing group ID."
 
     debug_print "Changing ownership of all files and directories..."
-    find "$ANSIBLE_HOME" \( -user "$default_uid" -o -group "$default_gid" \) -exec chown -h "${PUID}:${PGID}" {} + 2>/dev/null || echo "Error changing ownership of files and directories."
-
-    # Update user's home directory permissions
-    chown "${PUID}:${PGID}" "/home/${default_unprivileged_user}"
+    chown "${PUID}:${PGID}" "/home/${default_unprivileged_user}" "/home/${default_unprivileged_user}/.ssh" "${ANSIBLE_HOME}" "/ssh"
+    
 fi
 
 # Rename the Ansible user if it doesn't match the default
@@ -71,14 +69,14 @@ if [ "$run_as_user" != "$default_unprivileged_user" ]; then
         usermod -l "$run_as_user" "$default_unprivileged_user"
         groupmod -n "$run_as_user" "$default_unprivileged_user"
         
-        # Update home directory
+        # Update home directory and move contents to new home directory
         usermod -d "/home/$run_as_user" -m "$run_as_user"
     elif [ -f /etc/debian_version ]; then
         # Debian
         usermod -l "$run_as_user" "$default_unprivileged_user"
         groupmod -n "$run_as_user" "$default_unprivileged_user"
         
-        # Update home directory
+        # Update home directory and move contents to new home directory
         usermod -d "/home/$run_as_user" -m "$run_as_user"
         
         # Update default group
