@@ -51,7 +51,7 @@ Versions are made available with `ansible` and `ansible-core`. Everything is ver
 
 ```bash
 docker run --rm -it \
-  -v "$HOME/.ssh:/home/ansible/.ssh" \
+  -v "$HOME/.ssh:/ssh" \
   -v "$(pwd):/ansible" \
   serversideup/ansible:latest ansible-playbook playbook.yml
 ```
@@ -60,7 +60,7 @@ docker run --rm -it \
 
 ```bash
 docker run --rm -it \
-  -v "$HOME/.ssh:/home/ansible/.ssh" \
+  -v "$HOME/.ssh:/ssh" \
   -v "$(pwd):/ansible" \
   -e PUID=9999 -e PGID=9999 \
   -e RUN_AS_USER=bob \
@@ -70,9 +70,43 @@ docker run --rm -it \
 ### Run a shell
 ```bash
 docker run --rm -it \
-  -v "$HOME/.ssh:/home/ansible/.ssh" \
+  -v "$HOME/.ssh:/ssh" \
   -v "$(pwd):/ansible" \
   serversideup/ansible:latest /bin/sh
+```
+
+### Working with SSH
+> [!NOTE]  
+> Working with SSH keys can be tricky, especially if we're setting a `RUN_AS_USER` dynamically. We created a few things to help reduce the headache of getting this configured.
+
+#### The `/ssh` directory
+By default, we have a `/ssh` directory that is symbolically linked from `~/.ssh`. The `/ssh` directory is used as our single source of truth for SSH keys and configurations.
+
+If you set `RUN_AS_USER`, the entrypoint will create a home directory at `/home/${RUN_AS_USER}`, then create a symbolic link from `/home/${RUN_AS_USER}/.ssh` to `/ssh`. This gives you the power to set your `RUN_AS_USER` to anything you want without us needing to predict what user you want to run as.
+
+#### Mounting the SSH auth socket
+The SSH auth socket is a Unix socket used by the SSH agent to communicate with other processes, allowing for secure key management. To use it with Docker, you can mount it as follows:
+
+**macOS:**
+```bash
+docker run --rm -it \
+  -v "$HOME/.ssh:/ssh" \
+  -v "$(pwd):/ansible" \
+  -v "/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock" \
+  -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" \
+  serversideup/ansible:latest ansible-playbook playbook.yml
+```
+
+Notice how we're matching the `SSH_AUTH_SOCK` to the host's socket. This is necessary for the SSH agent to communicate with the container.
+
+**Linux:**
+```bash
+docker run --rm -it \
+  -v "$HOME/.ssh:/ssh" \
+  -v "$(pwd):/ansible" \
+  -v "$SSH_AUTH_SOCK:$SSH_AUTH_SOCK" \
+  -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK" \
+  serversideup/ansible:latest ansible-playbook playbook.yml
 ```
 
 ### Environment Variables
