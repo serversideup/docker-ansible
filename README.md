@@ -45,7 +45,52 @@ Versions are made available with `ansible` and `ansible-core`. Everything is ver
 | `serversideup/ansible-core` |[![DockerHub serversideup/ansible-core:alpine](https://img.shields.io/docker/image-size/serversideup/ansible-core/alpine?label=alpine)](https://hub.docker.com/r/serversideup/ansible-core/tags?name=alpine)<br>[![DockerHub serversideup/ansible-core](https://img.shields.io/docker/image-size/serversideup/ansible-core/latest?label=debian)](https://hub.docker.com/r/serversideup/ansible-core) | Lightweight, core installation of Ansible. |
 | `serversideup/ansible` | [![DockerHub serversideup/ansible:alpine](https://img.shields.io/docker/image-size/serversideup/ansible/alpine?label=alpine)](https://hub.docker.com/r/serversideup/ansible/tags?name=alpine)<br>[![DockerHub serversideup/ansible](https://img.shields.io/docker/image-size/serversideup/ansible/latest?label=debian)](https://hub.docker.com/r/serversideup/ansible) | "Batteries included" installation of Ansible. |
 
-### Run a playbook
+## Image Tagging System
+
+Our Docker images use a comprehensive tagging system for flexibility and specificity.
+
+### Tag Components
+
+| Component | Example |
+|-----------|---------|
+| Ansible version | `2.15.3`, `2.15` |
+| Base OS | `alpine3.18`, `ubuntu22.04` |
+| Python version | `python3.11` |
+| OS family | `alpine`, `ubuntu` |
+
+### Tag Examples
+
+| Tag | Meaning |
+|-----|---------|
+| `2.15.3-alpine3.18-python3.11` | Most specific |
+| `2.15.3-alpine3.18` | Latest Python for specific Ansible and OS |
+| `2.15.3` | Latest OS and Python for specific Ansible |
+| `2.15-alpine3.18-python3.11` | Latest patch for Ansible minor version |
+| `2.15.3-alpine-python3.11` | OS family-based |
+
+### Automatic "Latest" Tags
+
+The system generates "latest" tags based on:
+- Latest Ansible patch/minor version
+- Latest Python version
+- Latest OS version within a family
+- Default OS family
+
+Examples: `2.15-alpine3.18`, `alpine3.18-python3.11`, `alpine`
+
+### Release Types
+
+Tags may include release types: `latest` (stable), `beta`, `rc` (release candidate)
+
+### Benefits
+
+1. Pin to specific versions for stability
+2. Easily upgrade to latest patches or minor versions
+3. Choose between different OS families and versions
+4. Select specific Python versions
+5. Use latest stable versions with minimal specification
+
+## Run a playbook
 > [!IMPORTANT]  
 > In almost all cases you will need to mount a volume to the Ansible "working directory" (default: `/ansible`) and your SSH configurations (usually `~/.ssh`).
 
