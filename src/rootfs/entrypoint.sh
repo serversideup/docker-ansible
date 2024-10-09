@@ -79,9 +79,9 @@ if { [ ! -z "${PUID}" ] && [ "${PUID}" != "$default_uid" ]; } || { [ ! -z "${PGI
         groupmod -g "999${PGID}" "${old_group}"
     fi
 
-    # Change UID and GID of Ansible user and group
-    usermod -u "${PUID}" ansible 2>&1 >/dev/null || echo "Error changing user ID."
-    groupmod -g "${PGID}" ansible 2>&1 >/dev/null || echo "Error changing group ID."
+    # Change UID and GID of  run_as user and group
+    usermod -u "${PUID}" "${run_as_user}" 2>&1 >/dev/null || echo "Error changing user ID."
+    groupmod -g "${PGID}" "${run_as_user}" 2>&1 >/dev/null || echo "Error changing group ID."
 
     debug_print "Changing ownership of all files and directories..."
     chown "${PUID}:${PGID}" "/home/${run_as_user}" "/home/${run_as_user}/.ssh" "${ANSIBLE_HOME}" "/ssh"
