@@ -39,9 +39,10 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     chown "${PUID}:${PGID}" /ssh && \
     ln -s /ssh /home/ansible/.ssh && \
     \
-    # Install Ansible
+    # Install Ansible and additional dependencies
     echo "🤓 Installing ${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
     pip3 install --no-cache-dir "${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
+    pip3 install --no-cache-dir "ansible-lint passlib requests python-dateutil" && \
     \
     # Verify Ansible installation
     ansible --version
