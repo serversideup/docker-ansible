@@ -42,10 +42,21 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     # Install Ansible and additional dependencies
     echo "🤓 Installing ${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
     pip3 install --no-cache-dir "${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
-    pip3 install --no-cache-dir "ansible-lint passlib requests python-dateutil" && \
+    pip3 install --no-cache-dir ansible-lint passlib requests python-dateutil && \
     \
     # Verify Ansible installation
     ansible --version
+
+# Add labels here
+LABEL org.opencontainers.image.title="serversideup/${BUILD_ANSIBLE_VARIATION}" \
+    org.opencontainers.image.description="Ansible Docker Image" \
+    org.opencontainers.image.url="https://serversideup.net/open-source/docker-php/" \
+    org.opencontainers.image.source="https://github.com/serversideup/docker-php" \
+    org.opencontainers.image.documentation="https://serversideup.net/open-source/docker-php/docs/" \
+    org.opencontainers.image.vendor="ServerSideUp" \
+    org.opencontainers.image.authors="Jay Rogers (@jaydrogers)" \
+    org.opencontainers.image.version="${REPOSITORY_BUILD_VERSION}" \
+    org.opencontainers.image.licenses="GPL-3.0-or-later"
 
 ENTRYPOINT ["/entrypoint.sh"]
 
