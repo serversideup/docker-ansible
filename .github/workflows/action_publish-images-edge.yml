@@ -11,7 +11,7 @@ on:
       - ansible-versions.yml
       - build.sh
 jobs:
-  build-beta-images:
+  build-edge-images:
     uses: ./.github/workflows/service_docker-build-and-publish.yml
     secrets: inherit
     with:
