@@ -8,6 +8,7 @@ ARG BUILD_ANSIBLE_PATCH_VERSION=''
 ARG PACKAGE_DEPENDENCIES=''
 ARG PUID='1000'
 ARG PGID='1000'
+ARG REPOSITORY_BUILD_VERSION='dev'
 
 ENV DEBUG=false \
     ANSIBLE_WORK_DIR=/ansible \
@@ -49,10 +50,10 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
 
 # Add labels here
 LABEL org.opencontainers.image.title="serversideup/${BUILD_ANSIBLE_VARIATION}" \
-    org.opencontainers.image.description="Ansible Docker Image" \
-    org.opencontainers.image.url="https://serversideup.net/open-source/docker-php/" \
-    org.opencontainers.image.source="https://github.com/serversideup/docker-php" \
-    org.opencontainers.image.documentation="https://serversideup.net/open-source/docker-php/docs/" \
+    org.opencontainers.image.description="Run Ansible anywhere with a lightwieght and powerful Docker image" \
+    org.opencontainers.image.url="https://github.com/serversideup/docker-ansible" \
+    org.opencontainers.image.source="https://github.com/serversideup/docker-ansible" \
+    org.opencontainers.image.documentation="https://github.com/serversideup/docker-ansible" \
     org.opencontainers.image.vendor="ServerSideUp" \
     org.opencontainers.image.authors="Jay Rogers (@jaydrogers)" \
     org.opencontainers.image.version="${REPOSITORY_BUILD_VERSION}" \

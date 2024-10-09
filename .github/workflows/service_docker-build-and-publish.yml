@@ -62,7 +62,19 @@ jobs:
             --python ${{ matrix.python_version }} \
             --os ${{ matrix.base_os }} \
             --release-type ${{ inputs.release_type }} \
-            --print-tags-only
+            --print-tags-only\
+
+      - name: Set REPOSITORY_BUILD_VERSION
+        id: set_version
+        run: |
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            echo "🚀 Setting REPOSITORY_BUILD_VERSION to Tag"
+            echo "REPOSITORY_BUILD_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            echo "👨‍🔬 Setting REPOSITORY_BUILD_VERSION to GIT Short SHA and GitHub Run ID"
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+            echo "REPOSITORY_BUILD_VERSION=git-${SHORT_SHA}-${{ github.run_id }}" >> $GITHUB_ENV
+          fi
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -76,6 +88,7 @@ jobs:
             BUILD_ANSIBLE_VARIATION=${{ matrix.ansible_variation }}
             BUILD_ANSIBLE_PATCH_VERSION=${{ env.BUILD_ANSIBLE_PATCH_VERSION }}
             PACKAGE_DEPENDENCIES=${{ env.PACKAGE_DEPENDENCIES }}
+            REPOSITORY_BUILD_VERSION=${{ env.REPOSITORY_BUILD_VERSION }}
           platforms: |
             linux/amd64
             linux/arm64/v8
