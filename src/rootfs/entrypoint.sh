@@ -89,10 +89,13 @@ fi
 
 # Run the command as the unprivileged user if PUID, PGID are set, or if RUN_AS_USER is different from default
 if [ ! -z "${PUID}" ] || [ ! -z "${PGID}" ] || [ "$run_as_user" != "$default_unprivileged_user" ]; then
+    if [ "$SSH_AUTH_SOCK" ]; then
+        debug_print "Ensure the SSH_AUTH_SOCK has the correct permissions..."
+        chown "${PUID}:${PGID}" "$SSH_AUTH_SOCK"
+    fi
     debug_print "Running command as \"$run_as_user\"..."
     switch_user "$@"
 else
     debug_print "Running command as root..."
     exec "$@"
 fi
-
