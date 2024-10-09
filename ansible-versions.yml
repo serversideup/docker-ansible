@@ -86,6 +86,7 @@ operating_system_distributions:
         package_dependencies:
           - "git"
           - "gosu"
+          - "less"
           - "libffi-dev"
           - "libhdf5-dev"
           - "libssl-dev"
