@@ -84,7 +84,7 @@ if { [ ! -z "${PUID}" ] && [ "${PUID}" != "$default_uid" ]; } || { [ ! -z "${PGI
     groupmod -g "${PGID}" "${run_as_user}" 2>&1 >/dev/null || echo "Error changing group ID."
 
     debug_print "Changing ownership of all files and directories..."
-    chown "${PUID}:${PGID}" "/home/${run_as_user}" "/home/${run_as_user}/.ssh" "${ANSIBLE_HOME}" "/ssh"
+    chown "${PUID}:${PGID}" "/home/${run_as_user}" "${ANSIBLE_HOME}"
 fi
 
 # Run the command as the unprivileged user if PUID, PGID are set, or if RUN_AS_USER is different from default
