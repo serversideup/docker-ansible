@@ -113,7 +113,8 @@ The SSH auth socket is a Unix socket used by the SSH agent to communicate with o
 **macOS:**
 ```bash
 docker run --rm -it \
-  -v "$HOME/.ssh:/ssh" \
+  -v "$HOME/.ssh:/ssh:ro" \
+  -v "$HOME/.ssh/known_hosts:/ssh/known_hosts:rw" \
   -v "$(pwd):/ansible" \
   -v "/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock" \
   -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" \
@@ -125,7 +126,8 @@ Notice how we're matching the `SSH_AUTH_SOCK` to the host's socket. This is nece
 **Linux:**
 ```bash
 docker run --rm -it \
-  -v "$HOME/.ssh:/ssh" \
+  -v "$HOME/.ssh:/ssh:ro" \
+ -v "$HOME/.ssh/known_hosts:/ssh/known_hosts:rw" \
   -v "$(pwd):/ansible" \
   -v "$SSH_AUTH_SOCK:$SSH_AUTH_SOCK" \
   -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK" \
