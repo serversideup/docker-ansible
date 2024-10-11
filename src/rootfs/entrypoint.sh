@@ -85,6 +85,13 @@ if { [ ! -z "${PUID}" ] && [ "${PUID}" != "$default_uid" ]; } || { [ ! -z "${PGI
 
     debug_print "Changing ownership of all files and directories..."
     chown "${PUID}:${PGID}" "/home/${run_as_user}" "${ANSIBLE_HOME}"
+
+fi
+
+if [ "$SSH_AUTH_SOCK" ]; then
+    debug_print "Creating a symbolic link to the SSH Agent socket in the 1Password directory..."
+    mkdir -p "/home/${run_as_user}/Library/Group Containers/2BUA8C4S2C.com.1password/t"
+    ln -sf "$SSH_AUTH_SOCK" "/home/${run_as_user}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 fi
 
 # Run the command as the unprivileged user if PUID, PGID are set, or if RUN_AS_USER is different from default
