@@ -86,12 +86,14 @@ operating_system_distributions:
         package_dependencies:
           - "git"
           - "gosu"
+          - "jq"
           - "less"
           - "libffi-dev"
           - "libhdf5-dev"
           - "libssl-dev"
           - "openssh-client"
           - "sshpass"
+          - "yq"
 
   - name: "alpine"
     versions:
@@ -100,6 +102,7 @@ operating_system_distributions:
         package_dependencies:
           - "build-base"
           - "git"
+          - "jq"
           - "libffi-dev"
           - "openssh-client"
           - "openssl-dev"
@@ -107,3 +110,4 @@ operating_system_distributions:
           - "shadow"
           - "sshpass"
           - "su-exec"
+          - "yq"
