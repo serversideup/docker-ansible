@@ -48,7 +48,6 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     # Verify Ansible installation
     ansible --version
 
-# Add labels here
 LABEL org.opencontainers.image.title="serversideup/${BUILD_ANSIBLE_VARIATION}" \
     org.opencontainers.image.description="Run Ansible anywhere with a lightwieght and powerful Docker image" \
     org.opencontainers.image.url="https://github.com/serversideup/docker-ansible" \
