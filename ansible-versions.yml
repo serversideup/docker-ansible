@@ -93,7 +93,6 @@ operating_system_distributions:
           - "libssl-dev"
           - "openssh-client"
           - "sshpass"
-          - "yq"
   - name: "alpine"
     versions:
       - name: "alpine3.20"
@@ -109,4 +108,3 @@ operating_system_distributions:
           - "shadow"
           - "sshpass"
           - "su-exec"
-          - "yq"

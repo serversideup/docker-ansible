@@ -21,6 +21,24 @@ COPY --chown=root:root --chmod=755 src/rootfs /
 RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     serversideup-dep-install-debian ${PACKAGE_DEPENDENCIES} && \
     \
+    # Install YQ based on OS and architecture
+    ARCH=$(uname -m) && \
+    if [ "${ARCH}" = "x86_64" ]; then \
+        YQ_BINARY="yq_linux_amd64"; \
+    elif [ "${ARCH}" = "aarch64" ]; then \
+        YQ_BINARY="yq_linux_arm64"; \
+    else \
+        echo "Unsupported architecture: ${ARCH}"; \
+        exit 1; \
+    fi && \
+    if [ -f /etc/alpine-release ]; then \
+        wget https://github.com/mikefarah/yq/releases/latest/download/${YQ_BINARY} -O /usr/bin/yq && \
+        chmod +x /usr/bin/yq; \
+    else \
+        wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/${YQ_BINARY} && \
+        chmod a+x /usr/local/bin/yq; \
+    fi && \
+    \
     # Create Ansible user and group
     serversideup-create-unprivileged-user ansible "${PUID}" "${PGID}" && \
     \
