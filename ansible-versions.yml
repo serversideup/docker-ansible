@@ -8,9 +8,9 @@ ansible_variations:
       - version: "2.18"
         latest_stable: true
         python_versions:
+          - "3.13"
           - "3.12"
           - "3.11"
-          - "3.10"
         base_os:
           - name: alpine3.20
           - name: bullseye
@@ -67,11 +67,11 @@ ansible_variations:
 # Python Versions
 ################################################
 python_versions:
-  - name: "3.12"
+  - name: "3.13"
     latest_stable: true
+  - name: "3.12"
   - name: "3.11"
   - name: "3.10"
-  - name: "3.9"
 
 ################################################
 # Operating System Distributions
