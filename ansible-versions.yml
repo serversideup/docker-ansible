@@ -5,8 +5,16 @@
 ansible_variations:
   - name: "ansible-core"
     versions:
-      - version: "2.17"
+      - version: "2.18"
         latest_stable: true
+        python_versions:
+          - "3.12"
+          - "3.11"
+          - "3.10"
+        base_os:
+          - name: alpine3.20
+          - name: bullseye
+      - version: "2.17"
         python_versions:
           - "3.12"
           - "3.11"
@@ -20,15 +28,6 @@ ansible_variations:
           - "3.12"
           - "3.11"
           - "3.10"
-        base_os:
-          - name: alpine3.20
-          - name: bullseye
-
-      - version: "2.15"
-        python_versions:
-          - "3.11"
-          - "3.10"
-          - "3.9"
         base_os:
           - name: alpine3.20
           - name: bullseye
