@@ -34,7 +34,7 @@ jobs:
         with:
           destination_container_repo: serversideup/ansible
           provider: dockerhub
-          short_description: 'Run Ansible anywhere with a lightwieght and powerful Docker image.'
+          short_description: 'Run Ansible anywhere with a lightweight and powerful Docker image.'
           readme_file: 'README.md'
 
       - name: push README to Dockerhub (ansible-core)
@@ -45,5 +45,5 @@ jobs:
         with:
           destination_container_repo: serversideup/ansible-core
           provider: dockerhub
-          short_description: 'Run Ansible anywhere with a lightwieght and powerful Docker image.'
+          short_description: 'Run Ansible anywhere with a lightweight and powerful Docker image.'
           readme_file: 'README.md'

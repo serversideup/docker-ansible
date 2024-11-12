@@ -67,7 +67,7 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     ansible --version
 
 LABEL org.opencontainers.image.title="serversideup/${BUILD_ANSIBLE_VARIATION}" \
-    org.opencontainers.image.description="Run Ansible anywhere with a lightwieght and powerful Docker image" \
+    org.opencontainers.image.description="Run Ansible anywhere with a lightweight and powerful Docker image" \
     org.opencontainers.image.url="https://github.com/serversideup/docker-ansible" \
     org.opencontainers.image.source="https://github.com/serversideup/docker-ansible" \
     org.opencontainers.image.documentation="https://github.com/serversideup/docker-ansible" \
