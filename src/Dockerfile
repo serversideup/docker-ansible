@@ -61,7 +61,7 @@ RUN serversideup-dep-install-alpine ${PACKAGE_DEPENDENCIES} && \
     # Install Ansible and additional dependencies
     echo "🤓 Installing ${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
     pip3 install --no-cache-dir "${BUILD_ANSIBLE_VARIATION}==${BUILD_ANSIBLE_PATCH_VERSION}" && \
-    pip3 install --no-cache-dir ansible-lint passlib requests python-dateutil && \
+    pip3 install --no-cache-dir ansible-lint passlib requests python-dateutil 'pywinrm[kerberos]>=0.4.0' 'pypsrp[kerberos]<=1.0.0' && \
     \
     # Verify Ansible installation
     ansible --version
