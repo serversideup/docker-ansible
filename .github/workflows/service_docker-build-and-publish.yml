@@ -8,6 +8,10 @@ on:
         required: true
         description: 'Release type (latest, beta, edge, dev, etc)'
         default: 'edge'
+      ref:
+        type: string
+        default: ${{ github.ref }}
+        description: 'The git ref to checkout (branch, tag, or commit SHA)'
 
 jobs:
   setup-matrix:
@@ -17,7 +21,9 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-        
+        with:
+          ref: ${{ inputs.ref }}
+
       - name: Assemble Ansible versions into the matrix 😎
         id: get-ansible-versions
         run: |
@@ -34,6 +40,8 @@ jobs:
     steps:
       - name: Check out code.
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
