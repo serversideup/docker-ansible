@@ -5,8 +5,16 @@
 ansible_variations:
   - name: "ansible-core"
     versions:
-      - version: "2.18"
+      - version: "2.19"
         latest_stable: true
+        python_versions:
+          - "3.13"
+          - "3.12"
+          - "3.11"
+        base_os:
+          - name: alpine3.22
+          - name: trixie
+      - version: "2.18"
         python_versions:
           - "3.13"
           - "3.12"
@@ -38,8 +46,16 @@ ansible_variations:
   - name: "ansible"
     latest_stable: true
     versions:
-      - version: "11"
+      - version: "12"
         latest_stable: true
+        python_versions:
+          - "3.13"
+          - "3.12"
+          - "3.11"
+        base_os:
+          - name: alpine3.22
+          - name: trixie
+      - version: "11"
         python_versions:
           - "3.13"
           - "3.12"
