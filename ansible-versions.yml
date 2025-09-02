@@ -13,7 +13,9 @@ ansible_variations:
           - "3.11"
         base_os:
           - name: alpine3.20
+          - name: alpine3.22
           - name: bullseye
+          - name: trixie
       - version: "2.17"
         python_versions:
           - "3.12"
@@ -21,8 +23,9 @@ ansible_variations:
           - "3.10"
         base_os:
           - name: alpine3.20
+          - name: alpine3.22
           - name: bullseye
-
+          - name: trixie
       - version: "2.16"
         python_versions:
           - "3.12"
@@ -35,17 +38,27 @@ ansible_variations:
   - name: "ansible"
     latest_stable: true
     versions:
-      - version: "10"
+      - version: "11"
         latest_stable: true
         python_versions:
           - "3.12"
           - "3.11"
           - "3.10"
         base_os:
+          - name: alpine3.22
+          - name: trixie
+      - version: "10"
+        python_versions:
+          - "3.12"
+          - "3.11"
+          - "3.10"
+        base_os:
           - name: alpine3.20
+          - name: alpine3.22
           - name: bullseye
-        patch_versions:
-          - 10.3.0
+          - name: trixie
+        # patch_versions:
+        #   - 10.3.0
       - version: "9"
         python_versions:
           - "3.12"
@@ -81,6 +94,17 @@ operating_system_distributions:
     latest_stable: true
     versions:
       - name: "bullseye"
+        package_dependencies:
+          - "git"
+          - "gosu"
+          - "jq"
+          - "less"
+          - "libffi-dev"
+          - "libhdf5-dev"
+          - "libssl-dev"
+          - "openssh-client"
+          - "sshpass"
+      - name: "trixie"
         latest_stable: true
         package_dependencies:
           - "git"
@@ -95,6 +119,18 @@ operating_system_distributions:
   - name: "alpine"
     versions:
       - name: "alpine3.20"
+        package_dependencies:
+          - "build-base"
+          - "git"
+          - "libffi-dev"
+          - "jq"
+          - "openssh-client"
+          - "openssl-dev"
+          - "rsync"
+          - "shadow"
+          - "sshpass"
+          - "su-exec"
+      - name: "alpine3.22"
         latest_stable: true
         package_dependencies:
           - "build-base"
