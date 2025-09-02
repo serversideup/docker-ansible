@@ -15,7 +15,7 @@ on:
 
 jobs:
   setup-matrix:
-    runs-on: ubuntu-24.04
+    runs-on: depot-ubuntu-24.04
     outputs:
       ansible-version-map-json: ${{ steps.get-ansible-versions.outputs.matrix }}
     steps:
@@ -34,7 +34,7 @@ jobs:
 
   build-and-push:
     needs: setup-matrix
-    runs-on: ubuntu-24.04
+    runs-on: depot-ubuntu-24.04-4
     strategy:
       matrix: ${{fromJson(needs.setup-matrix.outputs.ansible-version-map-json)}}
     steps:
