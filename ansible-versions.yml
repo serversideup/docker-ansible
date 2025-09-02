@@ -41,9 +41,9 @@ ansible_variations:
       - version: "11"
         latest_stable: true
         python_versions:
+          - "3.13"
           - "3.12"
           - "3.11"
-          - "3.10"
         base_os:
           - name: alpine3.22
           - name: trixie
