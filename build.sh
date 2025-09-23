@@ -184,7 +184,7 @@ generate_tags() {
     fi
 
     # Tag with only Ansible version and OS if it's the latest Python
-    if is_latest_python && is_latest_os_family; then
+    if is_latest_python && is_default_os_family; then
         add_tag "${BUILD_ANSIBLE_PATCH_VERSION}"
     fi
 
@@ -194,7 +194,7 @@ generate_tags() {
         if is_latest_python; then
             add_tag "${build_ansible_minor_version}-${BUILD_BASE_OS}"
         fi
-        if is_latest_python && is_latest_os_family; then
+        if is_latest_python && is_default_os_family; then
             add_tag "${build_ansible_minor_version}"
         fi
     fi
