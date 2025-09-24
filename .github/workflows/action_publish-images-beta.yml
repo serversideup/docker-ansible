@@ -10,12 +10,15 @@ jobs:
     outputs:
       release_tag: ${{ steps.get_latest_beta.outputs.release_tag }}
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        
       - name: Get Latest Beta Release
         id: get_latest_beta
         env:
          GH_TOKEN: ${{ github.token }}
         run: |
-          LATEST_BETA=$(gh release list --limit 200 --json tagName,isPrerelease,isLatest,publishedAt | jq -r 'sort_by(.publishedAt) | reverse | map(select(.isPrerelease == true)) | first | .tagName')
+          LATEST_BETA=$(gh release list --repo ${{ github.repository }} --limit 200 --json tagName,isPrerelease,isLatest,publishedAt | jq -r 'sort_by(.publishedAt) | reverse | map(select(.isPrerelease == true)) | first | .tagName')
           echo "release_tag=${LATEST_BETA}" >> $GITHUB_OUTPUT
 
   build-beta-images:

@@ -18,7 +18,7 @@ jobs:
         env:
          GH_TOKEN: ${{ github.token }}
         run: |
-          LATEST_TAG=$(gh release list --limit 200 --json tagName,isPrerelease,isLatest,publishedAt | jq -r '.[] | select(.isLatest == true) | .tagName')
+          LATEST_TAG=$(gh release list --repo ${{ github.repository }} --limit 200 --json tagName,isPrerelease,isLatest,publishedAt | jq -r '.[] | select(.isLatest == true) | .tagName')
           echo "release_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
 
   build-production-images:
