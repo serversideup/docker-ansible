@@ -24,4 +24,4 @@ jobs:
     secrets: inherit
     with:
       release_type: 'beta'
-      ref: ${{ needs.get-latest-beta-release.outputs.release_tag || github.ref }}
+      ref: ${{ needs.get-latest-beta-release.outputs.release_tag }}
