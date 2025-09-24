@@ -15,7 +15,7 @@ jobs:
         env:
          GH_TOKEN: ${{ github.token }}
         run: |
-          LATEST_BETA=$(gh release list --limit 200 --json tagName,isPrerelease,publishedAt --jq 'map(select(.isPrerelease)) | sort_by(.publishedAt) | (.[-1].tagName // empty)')
+          LATEST_BETA=$(gh release list --limit 200 --json tagName,isPrerelease,isLatest,publishedAt | jq -r 'sort_by(.publishedAt) | reverse | map(select(.isPrerelease == true)) | first | .tagName'')
           echo "release_tag=${LATEST_BETA}" >> $GITHUB_OUTPUT
 
   build-beta-images:
