@@ -127,6 +127,7 @@ operating_system_distributions:
           - "git"
           - "gosu"
           - "jq"
+          - "krb5-user"
           - "less"
           - "libffi-dev"
           - "libhdf5-dev"
