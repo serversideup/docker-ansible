@@ -53,20 +53,20 @@ Our Docker images use a comprehensive tagging system for flexibility and specifi
 
 | Component | Example |
 |-----------|---------|
-| Ansible version | `2.17.3`, `2.17` |
-| Base OS | `alpine3.20`, `bullseye` |
-| Python version | `python3.11` |
+| Ansible version | `2.21.2`, `2.21` |
+| Base OS | `alpine3.24`, `trixie` |
+| Python version | `python3.14` |
 | OS family | `alpine`, `debian` |
 
 ### Tag Examples
 
 | Tag | Meaning |
 |-----|---------|
-| `2.17.3-alpine3.20-python3.11` | Most specific |
-| `2.17.3-alpine3.20` | Latest Python for specific Ansible and OS |
-| `2.17.3` | Latest OS and Python for specific Ansible |
-| `2.17-alpine3.20-python3.11` | Latest patch for Ansible minor version |
-| `2.17-alpine-python3.11` | OS family-based |
+| `2.21.2-alpine3.24-python3.14` | Most specific |
+| `2.21.2-alpine3.24` | Latest Python for specific Ansible and OS |
+| `2.21.2` | Latest OS and Python for specific Ansible |
+| `2.21-alpine3.24-python3.14` | Latest patch for Ansible minor version |
+| `2.21-alpine-python3.14` | OS family-based |
 
 ## Run a playbook
 > [!IMPORTANT]  

@@ -5,8 +5,26 @@
 ansible_variations:
   - name: "ansible-core"
     versions:
-      - version: "2.19"
+      - version: "2.21"
         latest_stable: true
+        python_versions:
+          - "3.14"
+          - "3.13"
+          - "3.12"
+        base_os:
+          - name: alpine3.23
+          - name: alpine3.24
+          - name: trixie
+      - version: "2.20"
+        python_versions:
+          - "3.14"
+          - "3.13"
+          - "3.12"
+        base_os:
+          - name: alpine3.23
+          - name: alpine3.24
+          - name: trixie
+      - version: "2.19"
         python_versions:
           - "3.13"
           - "3.12"
@@ -46,17 +64,34 @@ ansible_variations:
   - name: "ansible"
     latest_stable: true
     versions:
-      # - version: "12"
-      #   latest_stable: true
-      #   python_versions:
-      #     - "3.13"
-      #     - "3.12"
-      #     - "3.11"
-      #   base_os:
-      #     - name: alpine3.22
-      #     - name: trixie
-      - version: "11"
+      - version: "14"
         latest_stable: true
+        python_versions:
+          - "3.14"
+          - "3.13"
+          - "3.12"
+        base_os:
+          - name: alpine3.23
+          - name: alpine3.24
+          - name: trixie
+      - version: "13"
+        python_versions:
+          - "3.14"
+          - "3.13"
+          - "3.12"
+        base_os:
+          - name: alpine3.23
+          - name: alpine3.24
+          - name: trixie
+      - version: "12"
+        python_versions:
+          - "3.13"
+          - "3.12"
+          - "3.11"
+        base_os:
+          - name: alpine3.22
+          - name: trixie
+      - version: "11"
         python_versions:
           - "3.13"
           - "3.12"
@@ -97,8 +132,9 @@ ansible_variations:
 # Python Versions
 ################################################
 python_versions:
-  - name: "3.13"
+  - name: "3.14"
     latest_stable: true
+  - name: "3.13"
   - name: "3.12"
   - name: "3.11"
   - name: "3.10"
@@ -148,6 +184,30 @@ operating_system_distributions:
           - "sshpass"
           - "su-exec"
       - name: "alpine3.22"
+        package_dependencies:
+          - "build-base"
+          - "git"
+          - "libffi-dev"
+          - "jq"
+          - "openssh-client"
+          - "openssl-dev"
+          - "rsync"
+          - "shadow"
+          - "sshpass"
+          - "su-exec"
+      - name: "alpine3.23"
+        package_dependencies:
+          - "build-base"
+          - "git"
+          - "libffi-dev"
+          - "jq"
+          - "openssh-client"
+          - "openssl-dev"
+          - "rsync"
+          - "shadow"
+          - "sshpass"
+          - "su-exec"
+      - name: "alpine3.24"
         latest_stable: true
         package_dependencies:
           - "build-base"
