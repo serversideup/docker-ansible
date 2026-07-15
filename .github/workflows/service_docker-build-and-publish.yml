@@ -20,7 +20,7 @@ jobs:
       ansible-version-map-json: ${{ steps.get-ansible-versions.outputs.matrix }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 
@@ -39,28 +39,25 @@ jobs:
       matrix: ${{fromJson(needs.setup-matrix.outputs.ansible-version-map-json)}}
     steps:
       - name: Check out code.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
+
       - name: Login to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: "📦 Assemble the Docker Tags"
         run: |
@@ -85,11 +82,11 @@ jobs:
           fi
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: depot/build-push-action@v1
         with:
+          project: ${{ secrets.DEPOT_PROJECT_ID }}
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           file: src/Dockerfile
-          cache-from: type=gha,mode=max
-          cache-to: type=gha,mode=max
           build-args: |
             BUILD_PYTHON_VERSION=${{ matrix.python_version }}
             BUILD_BASE_OS_VERSION=${{ matrix.base_os }}
