@@ -36,6 +36,7 @@ jobs:
     needs: setup-matrix
     runs-on: depot-ubuntu-24.04-4
     strategy:
+      fail-fast: false
       matrix: ${{fromJson(needs.setup-matrix.outputs.ansible-version-map-json)}}
     steps:
       - name: Check out code.

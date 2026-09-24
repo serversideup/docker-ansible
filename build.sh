@@ -183,8 +183,8 @@ generate_tags() {
         add_tag "${BUILD_ANSIBLE_PATCH_VERSION}-${BUILD_BASE_OS}"
     fi
 
-    # Tag with only Ansible version and OS if it's the latest Python
-    if is_latest_python && is_default_os_family; then
+    # Tag with only Ansible version if it's the latest Python and the default OS
+    if is_latest_python && is_default_os_family && is_latest_os_family; then
         add_tag "${BUILD_ANSIBLE_PATCH_VERSION}"
     fi
 
@@ -194,7 +194,7 @@ generate_tags() {
         if is_latest_python; then
             add_tag "${build_ansible_minor_version}-${BUILD_BASE_OS}"
         fi
-        if is_latest_python && is_default_os_family; then
+        if is_latest_python && is_default_os_family && is_latest_os_family; then
             add_tag "${build_ansible_minor_version}"
         fi
     fi
@@ -212,21 +212,23 @@ generate_tags() {
         add_tag "$RELEASE_TYPE"
     fi
 
-    # OS family-based tags
-    add_tag "${BUILD_ANSIBLE_PATCH_VERSION}-${build_base_os_family}-python${BUILD_PYTHON_VERSION}"
-    if is_latest_python; then
-        add_tag "${BUILD_ANSIBLE_PATCH_VERSION}-${build_base_os_family}"
-    fi
-
-    if is_latest_ansible_minor; then
-        add_tag "${build_ansible_minor_version}-${build_base_os_family}-python${BUILD_PYTHON_VERSION}"
+    # OS family-based tags (only the latest OS version in a family owns these)
+    if is_latest_os_family; then
+        add_tag "${BUILD_ANSIBLE_PATCH_VERSION}-${build_base_os_family}-python${BUILD_PYTHON_VERSION}"
         if is_latest_python; then
-            add_tag "${build_ansible_minor_version}-${build_base_os_family}"
+            add_tag "${BUILD_ANSIBLE_PATCH_VERSION}-${build_base_os_family}"
         fi
-    fi
 
-    if is_latest_ansible_global && is_latest_python; then
-        add_tag "${build_base_os_family}"
+        if is_latest_ansible_minor; then
+            add_tag "${build_ansible_minor_version}-${build_base_os_family}-python${BUILD_PYTHON_VERSION}"
+            if is_latest_python; then
+                add_tag "${build_ansible_minor_version}-${build_base_os_family}"
+            fi
+        fi
+
+        if is_latest_ansible_global && is_latest_python; then
+            add_tag "${build_base_os_family}"
+        fi
     fi
 
     # Remove duplicates and print tags
@@ -379,9 +381,9 @@ help_menu() {
     echo
     echo "At least one of the following options is required:"
     echo "  --variation <variation>   Set the Ansible variation (e.g., ansible, ansible-core)"
-    echo "  --version <version>       Set the Ansible version (e.g., 2.15.3, 2.16.5, 2.17.4)"
-    echo "  --python <python_version> Set the Python version (e.g., 3.9, 3.10, 3.11, 3.12)"
-    echo "  --os <os>                 Set the base OS (e.g., alpine3.20, bullseye)"
+    echo "  --version <version>       Set the Ansible version (e.g., 2.21, 2.21.4, 14)"
+    echo "  --python <python_version> Set the Python version (e.g., 3.12, 3.13, 3.14)"
+    echo "  --os <os>                 Set the base OS (e.g., alpine3.24, trixie)"
     echo
     echo "Optional arguments:"
     echo "  --github-release-tag <tag> Set the GitHub release tag"

@@ -14,6 +14,7 @@ ansible_variations:
         base_os:
           - name: alpine3.23
           - name: alpine3.24
+          - name: bookworm
           - name: trixie
       - version: "2.20"
         python_versions:
@@ -23,6 +24,7 @@ ansible_variations:
         base_os:
           - name: alpine3.23
           - name: alpine3.24
+          - name: bookworm
           - name: trixie
       - version: "2.19"
         python_versions:
@@ -30,36 +32,10 @@ ansible_variations:
           - "3.12"
           - "3.11"
         base_os:
-          - name: alpine3.22
+          - name: alpine3.23
+          - name: alpine3.24
+          - name: bookworm
           - name: trixie
-      - version: "2.18"
-        python_versions:
-          - "3.13"
-          - "3.12"
-          - "3.11"
-        base_os:
-          - name: alpine3.20
-          - name: alpine3.22
-          - name: bullseye
-          - name: trixie
-      - version: "2.17"
-        python_versions:
-          - "3.12"
-          - "3.11"
-          - "3.10"
-        base_os:
-          - name: alpine3.20
-          - name: alpine3.22
-          - name: bullseye
-          - name: trixie
-      - version: "2.16"
-        python_versions:
-          - "3.12"
-          - "3.11"
-          - "3.10"
-        base_os:
-          - name: alpine3.20
-          - name: bullseye
 
   - name: "ansible"
     latest_stable: true
@@ -73,6 +49,7 @@ ansible_variations:
         base_os:
           - name: alpine3.23
           - name: alpine3.24
+          - name: bookworm
           - name: trixie
       - version: "13"
         python_versions:
@@ -82,6 +59,7 @@ ansible_variations:
         base_os:
           - name: alpine3.23
           - name: alpine3.24
+          - name: bookworm
           - name: trixie
       - version: "12"
         python_versions:
@@ -89,44 +67,10 @@ ansible_variations:
           - "3.12"
           - "3.11"
         base_os:
-          - name: alpine3.22
+          - name: alpine3.23
+          - name: alpine3.24
+          - name: bookworm
           - name: trixie
-      - version: "11"
-        python_versions:
-          - "3.13"
-          - "3.12"
-          - "3.11"
-        base_os:
-          - name: alpine3.22
-          - name: trixie
-      - version: "10"
-        python_versions:
-          - "3.12"
-          - "3.11"
-          - "3.10"
-        base_os:
-          - name: alpine3.20
-          - name: alpine3.22
-          - name: bullseye
-          - name: trixie
-        # patch_versions:
-        #   - 10.3.0
-      - version: "9"
-        python_versions:
-          - "3.12"
-          - "3.11"
-          - "3.10"
-        base_os:
-          - name: alpine3.20
-          - name: bullseye
-      - version: "8"
-        python_versions:
-          - "3.12"
-          - "3.11"
-          - "3.10"
-        base_os:
-          - name: alpine3.20
-          - name: bullseye
 
 ################################################
 # Python Versions
@@ -137,7 +81,6 @@ python_versions:
   - name: "3.13"
   - name: "3.12"
   - name: "3.11"
-  - name: "3.10"
 
 ################################################
 # Operating System Distributions
@@ -146,7 +89,7 @@ operating_system_distributions:
   - name: "debian"
     latest_stable: true
     versions:
-      - name: "bullseye"
+      - name: "bookworm"
         package_dependencies:
           - "git"
           - "gosu"
@@ -171,30 +114,6 @@ operating_system_distributions:
           - "sshpass"
   - name: "alpine"
     versions:
-      - name: "alpine3.20"
-        package_dependencies:
-          - "build-base"
-          - "git"
-          - "libffi-dev"
-          - "jq"
-          - "openssh-client"
-          - "openssl-dev"
-          - "rsync"
-          - "shadow"
-          - "sshpass"
-          - "su-exec"
-      - name: "alpine3.22"
-        package_dependencies:
-          - "build-base"
-          - "git"
-          - "libffi-dev"
-          - "jq"
-          - "openssh-client"
-          - "openssl-dev"
-          - "rsync"
-          - "shadow"
-          - "sshpass"
-          - "su-exec"
       - name: "alpine3.23"
         package_dependencies:
           - "build-base"
